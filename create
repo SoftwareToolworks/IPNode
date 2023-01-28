@@ -1,0 +1,1 @@
+gcc -O2 -Wall -g *.c -o ipnode -lm -lpthread `pkg-config --libs alsa` `pkg-config --libs libbsd`
