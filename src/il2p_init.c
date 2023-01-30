@@ -77,7 +77,6 @@ void il2p_encode_rs(unsigned char *tx_data, int data_size, int num_parity, unsig
 
 int il2p_decode_rs(unsigned char *rec_block, int data_size, int num_parity, unsigned char *out)
 {
-
     //  Use zero padding in front if data size is too small.
 
     int n = data_size + num_parity; // total size in.

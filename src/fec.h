@@ -32,8 +32,8 @@ extern "C"
         unsigned char iprim;
     };
 
-#define MM (rs->mm)
 #define NN (rs->nn)
+#define A0 (rs->nn)
 
 #define ALPHA_TO (rs->alpha_to)
 #define INDEX_OF (rs->index_of)
@@ -42,7 +42,6 @@ extern "C"
 #define FCR (rs->fcr)
 #define PRIM (rs->prim)
 #define IPRIM (rs->iprim)
-#define A0 (NN)
 
     static inline int modnn(struct rs *rs, int x)
     {
@@ -58,22 +57,8 @@ extern "C"
 
     void encode_rs_char(struct rs *rs, unsigned char *data, unsigned char *bb);
     int decode_rs_char(struct rs *rs, unsigned char *data, int *eras_pos, int no_eras);
-
     struct rs *init_rs_char(unsigned int symsize, unsigned int gfpoly, unsigned int fcr, unsigned int prim, unsigned int nroots);
 
-    void fec_rec_bit(int dbit);
-
-    struct rs *fec_get_rs(int ctag_num);
-    uint64_t fec_get_ctag_value(int ctag_num);
-    int fec_get_k_data_radio(int ctag_num);
-    int fec_get_k_data_rs(int ctag_num);
-    int fec_get_nroots(int ctag_num);
-    int fec_tag_find_match(uint64_t t);
-
-#define CTAG_MIN 0x01
-#define CTAG_MAX 0x0B
-
-#define FEC_MAX_DATA 239
 #define FEC_MAX_CHECK 64
 #define FEC_BLOCK_SIZE 255
 
