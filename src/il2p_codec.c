@@ -9,8 +9,8 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "ipnode.h"
@@ -20,7 +20,6 @@
 int il2p_encode_frame(packet_t pp, unsigned char *iout)
 {
     unsigned char hdr[IL2P_HEADER_SIZE + IL2P_HEADER_PARITY];
-    int out_len = 0;
 
     int e = il2p_type_1_header(pp, hdr);
 
@@ -29,11 +28,11 @@ int il2p_encode_frame(packet_t pp, unsigned char *iout)
 
     il2p_scramble_block(hdr, iout, IL2P_HEADER_SIZE);
     il2p_encode_rs(iout, IL2P_HEADER_SIZE, IL2P_HEADER_PARITY, iout + IL2P_HEADER_SIZE);
-    out_len = IL2P_HEADER_SIZE + IL2P_HEADER_PARITY;
 
-    if (e == 0)
+    int out_len = IL2P_HEADER_SIZE + IL2P_HEADER_PARITY;
+
+    if (e == 0)  // Success. No info part.
     {
-        // Success. No info part.
         return out_len;
     }
 
@@ -44,10 +43,10 @@ int il2p_encode_frame(packet_t pp, unsigned char *iout)
 
     int k = il2p_encode_payload(pinfo, info_len, iout + out_len);
 
-    if (k > 0)
+    if (k > 0)  // Success. Info part was <= 1023 bytes.
     {
         out_len += k;
-        // Success. Info part was <= 1023 bytes.
+
         return out_len;
     }
 
@@ -69,9 +68,8 @@ packet_t il2p_decode_header_payload(unsigned char *uhdr, unsigned char *epayload
 
     packet_t pp = il2p_decode_header_type_1(uhdr, *symbols_corrected);
 
-    if (pp == NULL)
+    if (pp == NULL) // Failed for some reason.
     {
-        // Failed for some reason.
         return NULL;
     }
 
