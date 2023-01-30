@@ -32,8 +32,6 @@ static volatile int s_delete_count = 0;
 static volatile int s_cdata_new_count = 0;
 static volatile int s_cdata_delete_count = 0;
 
-static void append_to_queue(struct dlq_item_s *pnew);
-
 void dlq_init()
 {
     queue_head = NULL;
@@ -57,29 +55,6 @@ void dlq_init()
     }
 
     recv_thread_is_waiting = 0;
-}
-
-/*
- * Called from il2p_rec upon IL2P_DECODE
- */
-void dlq_rec_frame(packet_t pp)
-{
-    struct dlq_item_s *pnew = (struct dlq_item_s *)calloc(1, sizeof(struct dlq_item_s));
-
-    s_new_count++;
-
-    // TODO where does 50 come from?
-
-    if (s_new_count > s_delete_count + 50)
-    {
-        fprintf(stderr, "INTERNAL ERROR:  DLQ memory leak, new=%d, delete=%d\n", s_new_count, s_delete_count);
-    }
-
-    pnew->nextp = NULL;
-    pnew->type = DLQ_REC_FRAME;
-    pnew->pp = pp;
-
-    append_to_queue(pnew);
 }
 
 static void append_to_queue(struct dlq_item_s *pnew)
@@ -155,6 +130,29 @@ static void append_to_queue(struct dlq_item_s *pnew)
             exit(1);
         }
     }
+}
+
+/*
+ * Called from il2p_rec upon IL2P_DECODE
+ */
+void dlq_rec_frame(packet_t pp)
+{
+    struct dlq_item_s *pnew = (struct dlq_item_s *)calloc(1, sizeof(struct dlq_item_s));
+
+    s_new_count++;
+
+    // TODO where does 50 come from?
+
+    if (s_new_count > s_delete_count + 50)
+    {
+        fprintf(stderr, "INTERNAL ERROR:  DLQ memory leak, new=%d, delete=%d\n", s_new_count, s_delete_count);
+    }
+
+    pnew->nextp = NULL;
+    pnew->type = DLQ_REC_FRAME;
+    pnew->pp = pp;
+
+    append_to_queue(pnew);
 }
 
 /*
