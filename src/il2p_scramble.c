@@ -9,8 +9,8 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "ipnode.h"
@@ -27,6 +27,7 @@
 static inline int scramble_bit(int in, int *state)
 {
     int out = ((*state >> 4) ^ *state) & 1;
+
     *state = ((((in ^ *state) & 1) << 9) | (*state ^ ((*state & 1) << 4))) >> 1;
 
     return out;
@@ -39,23 +40,11 @@ static inline int scramble_bit(int in, int *state)
 static inline int descramble_bit(int in, int *state)
 {
     int out = (in ^ *state) & 1;
+
     *state = ((*state >> 1) | ((in & 1) << 8)) ^ ((in & 1) << 3);
 
     return out;
 }
-
-/*--------------------------------------------------------------------------------
- *
- * Function:	il2p_scramble_block
- *
- * Purpose:	Scramble a block before adding RS parity.
- *
- * Inputs:	in		Array of bytes.
- *		len		Number of bytes both in and out.
- *
- * Outputs:	out		Array of bytes.
- *
- *--------------------------------------------------------------------------------*/
 
 void il2p_scramble_block(unsigned char *in, unsigned char *out, int len)
 {

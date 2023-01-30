@@ -39,11 +39,10 @@ void il2p_rec_bit(int dbit)
 
     switch (F->state)
     {
-
     case IL2P_SEARCHING: // Searching for the sync word.
 
-        if (__builtin_popcount(F->acc ^ IL2P_SYNC_WORD) <= 1)
-        { // allow single bit mismatch
+        if (__builtin_popcount(F->acc ^ IL2P_SYNC_WORD) <= 1) // allow single bit mismatch
+        {
             F->state = IL2P_HEADER;
             F->bc = 0;
             F->hc = 0;
@@ -54,20 +53,20 @@ void il2p_rec_bit(int dbit)
 
         F->bc++;
 
-        if (F->bc == 8)
-        { // full byte has been collected.
+        if (F->bc == 8) // full byte has been collected.
+        {
             F->bc = 0;
 
             F->shdr[F->hc++] = F->acc & 0xff;
 
-            if (F->hc == IL2P_HEADER_SIZE + IL2P_HEADER_PARITY)
-            { // Have all of header
+            if (F->hc == IL2P_HEADER_SIZE + IL2P_HEADER_PARITY) // Have all of header
+            {
 
                 // Fix any errors and descramble.
                 int corrected = il2p_clarify_header(F->shdr, F->uhdr);
 
-                if (corrected >= 0)
-                { // Good header.
+                if (corrected >= 0) // Good header.
+                {
                     // How much payload is expected?
                     il2p_payload_properties_t plprop;
 
@@ -75,18 +74,18 @@ void il2p_rec_bit(int dbit)
 
                     F->eplen = il2p_payload_compute(&plprop, len);
 
-                    if (F->eplen >= 1)
-                    { // Need to gather payload.
+                    if (F->eplen >= 1) // Need to gather payload.
+                    {
                         F->pc = 0;
                         F->state = IL2P_PAYLOAD;
                     }
-                    else if (F->eplen == 0)
-                    { // No payload.
+                    else if (F->eplen == 0) // No payload.
+                    {
                         F->pc = 0;
                         F->state = IL2P_DECODE;
                     }
-                    else
-                    { // Error.
+                    else // Error.
+                    {
                         F->state = IL2P_SEARCHING;
                     }
                 }
@@ -102,8 +101,8 @@ void il2p_rec_bit(int dbit)
 
         F->bc++;
 
-        if (F->bc == 8)
-        { // full byte has been collected.
+        if (F->bc == 8) // full byte has been collected.
+        {
             F->bc = 0;
 
             F->spayload[F->pc++] = F->acc & 0xff;

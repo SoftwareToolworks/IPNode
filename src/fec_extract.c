@@ -66,7 +66,7 @@ int decode_rs_char(struct rs *restrict rs, unsigned char *restrict data, int *er
         goto finish;
     }
 
-    unsigned char tmp = '\0';
+    unsigned char tmp = 0;
 
     memset(&lambda[1], 0, NROOTS * sizeof(lambda[0]));
     lambda[0] = 1;
@@ -103,7 +103,7 @@ int decode_rs_char(struct rs *restrict rs, unsigned char *restrict data, int *er
     while (++r <= NROOTS)
     {
         /* Compute discrepancy at the r-th step in poly-form */
-        unsigned char discr_r = '\0';
+        unsigned char discr_r = 0;
 
         for (int i = 0; i < r; i++)
         {
@@ -183,7 +183,7 @@ int decode_rs_char(struct rs *restrict rs, unsigned char *restrict data, int *er
             }
         }
 
-        if (q != '\0')
+        if (q != 0)
             continue; /* Not a root */
 
         /* store root (index-form) and error location number */
@@ -215,7 +215,7 @@ int decode_rs_char(struct rs *restrict rs, unsigned char *restrict data, int *er
 
     for (int i = 0; i < NROOTS; i++)
     {
-        tmp = '\0';
+        tmp = 0;
 
         for (int j = (deg_lambda < i) ? deg_lambda : i; j >= 0; j--)
         {
@@ -237,7 +237,7 @@ int decode_rs_char(struct rs *restrict rs, unsigned char *restrict data, int *er
      */
     for (int j = count - 1; j >= 0; j--)
     {
-        unsigned char num1 = '\0';
+        unsigned char num1 = 0;
 
         for (int i = deg_omega; i >= 0; i--)
         {
@@ -246,7 +246,7 @@ int decode_rs_char(struct rs *restrict rs, unsigned char *restrict data, int *er
         }
 
         unsigned char num2 = ALPHA_TO[MODNN(root[j] * (FCR - 1) + NN)];
-        unsigned char den = '\0';
+        unsigned char den = 0;
 
         /* lambda[i+1] for i even is the formal derivative lambda_pr of lambda[i] */
         for (int i = min(deg_lambda, NROOTS - 1) & ~1; i >= 0; i -= 2)
@@ -255,14 +255,14 @@ int decode_rs_char(struct rs *restrict rs, unsigned char *restrict data, int *er
                 den ^= ALPHA_TO[MODNN(lambda[i + 1] + i * root[j])];
         }
 
-        if (den == '\0')
+        if (den == 0)
         {
             count = -1;
             break;
         }
 
         /* Apply error to data */
-        if (num1 != '\0')
+        if (num1 != 0)
         {
             data[loc[j]] ^= ALPHA_TO[MODNN(INDEX_OF[num1] + INDEX_OF[num2] + NN - INDEX_OF[den])];
         }

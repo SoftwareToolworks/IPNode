@@ -9,8 +9,8 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "ipnode.h"
@@ -24,8 +24,7 @@ int il2p_payload_compute(il2p_payload_properties_t *p, int payload_size)
     {
         return -1;
     }
-
-    if (payload_size == 0)
+    else if (payload_size == 0)
     {
         return 0;
     }
@@ -47,24 +46,30 @@ int il2p_payload_compute(il2p_payload_properties_t *p, int payload_size)
 int il2p_encode_payload(unsigned char *payload, int payload_size, unsigned char *enc)
 {
     if (payload_size > IL2P_MAX_PAYLOAD_SIZE)
-        return (-1);
-
-    if (payload_size == 0)
-        return (0);
+    {
+        return -1;
+    }
+    else if (payload_size == 0)
+    {
+        return 0;
+    }
 
     // Determine number of blocks and sizes.
 
     il2p_payload_properties_t ipp;
+
     int e = il2p_payload_compute(&ipp, payload_size);
 
     if (e <= 0)
     {
-        return (e);
+        return e;
     }
 
     unsigned char *pin = payload;
     unsigned char *pout = enc;
+
     int encoded_length = 0;
+    
     unsigned char scram[256];
     unsigned char parity[IL2P_MAX_PARITY_SYMBOLS];
 
@@ -74,11 +79,15 @@ int il2p_encode_payload(unsigned char *payload, int payload_size, unsigned char 
     {
         il2p_scramble_block(pin, scram, ipp.large_block_size);
         memcpy(pout, scram, ipp.large_block_size);
+
         pin += ipp.large_block_size;
         pout += ipp.large_block_size;
+
         encoded_length += ipp.large_block_size;
         il2p_encode_rs(scram, ipp.large_block_size, ipp.parity_symbols_per_block, parity);
+
         memcpy(pout, parity, ipp.parity_symbols_per_block);
+
         pout += ipp.parity_symbols_per_block;
         encoded_length += ipp.parity_symbols_per_block;
     }
@@ -89,16 +98,20 @@ int il2p_encode_payload(unsigned char *payload, int payload_size, unsigned char 
     {
         il2p_scramble_block(pin, scram, ipp.small_block_size);
         memcpy(pout, scram, ipp.small_block_size);
+
         pin += ipp.small_block_size;
         pout += ipp.small_block_size;
+
         encoded_length += ipp.small_block_size;
         il2p_encode_rs(scram, ipp.small_block_size, ipp.parity_symbols_per_block, parity);
+
         memcpy(pout, parity, ipp.parity_symbols_per_block);
+
         pout += ipp.parity_symbols_per_block;
         encoded_length += ipp.parity_symbols_per_block;
     }
 
-    return (encoded_length);
+    return encoded_length;
 }
 
 int il2p_decode_payload(unsigned char *received, int payload_size, unsigned char *payload_out, int *symbols_corrected)
@@ -111,11 +124,12 @@ int il2p_decode_payload(unsigned char *received, int payload_size, unsigned char
 
     if (e <= 0)
     {
-        return (e);
+        return e;
     }
 
     unsigned char *pin = received;
     unsigned char *pout = payload_out;
+
     int decoded_length = 0;
     int failed = 0;
 
@@ -138,6 +152,7 @@ int il2p_decode_payload(unsigned char *received, int payload_size, unsigned char
 
         pin += ipp.large_block_size + ipp.parity_symbols_per_block;
         pout += ipp.large_block_size;
+
         decoded_length += ipp.large_block_size;
     }
 
@@ -158,6 +173,7 @@ int il2p_decode_payload(unsigned char *received, int payload_size, unsigned char
 
         pin += ipp.small_block_size + ipp.parity_symbols_per_block;
         pout += ipp.small_block_size;
+    
         decoded_length += ipp.small_block_size;
     }
 
