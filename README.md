@@ -27,7 +27,7 @@ The IL2P description says the idle symbols are supposed to be alternating ```010
 ```
 What the audio looks and sounds like. This shows a series of pings, with no station answering, and the beginning is extranoues output from the chrome browser over UDP:   
 
-<img src="docs/time-domain.png" alt="time-domain" width="500"/>   
+<img src="docs/time-domain.png" alt="time-domain"/>   
 
 [Link to a recorded audio WAV file](docs/qpsk-1200-baud-9600-samplerate.wav)  
 
