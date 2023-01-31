@@ -25,6 +25,8 @@ The IL2P description says the idle symbols are supposed to be alternating ```010
 +----------------------+-------------+---------------------+
    ramp-up transmitter     payload    ramp-down transmitter
 ```
+<img src="docs/actual-packet-data-spectrum.png" alt="actual spectrum" width="400"/>   
+
 #### Startup
 The ```ipnode``` program runs in a loop with three threads (tx, rx, and kiss). It will read the config file ```ipnode.conf``` if available, and begin running.
 ```
