@@ -31,6 +31,8 @@ What the audio looks and sounds like. This shows a series of pings, with no stat
 
 [Link to a recorded audio WAV file](docs/qpsk-1200-baud-9600-samplerate.wav)  
 
+This has an exagerated ```txdelay``` and ```txtail``` which is the 1 kHz beeps you hear.
+
 What the spectrum looks like:   
 
 <img src="docs/actual-packet-data-spectrum.png" alt="actual spectrum" width="400"/>   
