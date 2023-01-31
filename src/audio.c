@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -70,7 +71,7 @@ int audio_open(struct audio_s *pa)
     adev.audio_in_handle = NULL;
     adev.audio_out_handle = NULL;
 
-    if (pa->defined)
+    if (pa->defined == true)
     {
         adev.inbuf_size_in_bytes = 0;
         adev.inbuf_ptr = NULL;
@@ -116,12 +117,12 @@ int audio_open(struct audio_s *pa)
             return -1;
         }
 
-        adev.inbuf_ptr = malloc(adev.inbuf_size_in_bytes);
+        adev.inbuf_ptr = (unsigned char *)calloc(adev.inbuf_size_in_bytes, sizeof(unsigned char));
 
         if (adev.inbuf_ptr == NULL)
             return -1;
 
-        adev.outbuf_ptr = malloc(adev.outbuf_size_in_bytes);
+        adev.outbuf_ptr = (unsigned char *)calloc(adev.outbuf_size_in_bytes, sizeof(unsigned char));
 
         if (adev.outbuf_ptr == NULL)
             return -1;

@@ -25,13 +25,12 @@ extern "C"
 #define OCTYPE_DCD 1 // Data Carrier Detect
 #define OCTYPE_CON 2 // Connected Indicator
 #define OCTYPE_SYN 3 // Sync Indicator
-#define NUM_OCTYPES 4
 
-#define ICTYPE_TXINH 0 // Transmit Inhibit
+#define NUM_OCTYPES 4
 #define NUM_ICTYPES 1
 
+#define ICTYPE_TXINH 0 // Transmit Inhibit
 #define MAX_GPIO_NAME_LEN 20
-
 #define ONE_BUF_TIME 10
 
     struct ictrl_s
@@ -50,7 +49,7 @@ extern "C"
 
     struct audio_s
     {
-        int defined;
+        bool defined;
         float baud;
         int dwait;
         int slottime;

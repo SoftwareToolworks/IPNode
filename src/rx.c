@@ -35,7 +35,7 @@ void rx_init(struct audio_s *pa)
 {
     save_pa = pa;
 
-    if (pa->defined == 1)
+    if (pa->defined == true)
     {
         int e = pthread_create(&xmit_tid, NULL, rx_adev_thread, 0);
 

@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
@@ -102,14 +103,12 @@ static int parse_interval(char *str, int line)
 }
 #endif
 
-static char *split(char *string, int rest_of_line)
+static char *split(char *string)
 {
     static char cmd[MAXCMDLEN];
     static char token[MAXCMDLEN];
     static char shutup[] = " ";
     static char *c = shutup; // Current position in command line.
-    char *s, *t;
-    int in_quotes;
 
     /*
      * If string is provided, make a copy.
@@ -119,7 +118,8 @@ static char *split(char *string, int rest_of_line)
     if (string != NULL)
     {
         c = cmd;
-        for (s = string; *s != '\0'; s++)
+
+        for (char *s = string; *s != '\0'; s++)
         {
             if (*s == '\t')
             {
@@ -149,15 +149,14 @@ static char *split(char *string, int rest_of_line)
         c++;
     }
 
-    t = token;
-    in_quotes = 0;
+    char *t = token;
+    bool in_quotes = false;
 
     for (; *c != '\0'; c++)
     {
-
         if (*c == '"')
         {
-            if (in_quotes)
+            if (in_quotes == true)
             {
                 if (c[1] == '"')
                 {
@@ -165,17 +164,17 @@ static char *split(char *string, int rest_of_line)
                 }
                 else
                 {
-                    in_quotes = 0;
+                    in_quotes = false;
                 }
             }
             else
             {
-                in_quotes = 1;
+                in_quotes = true;
             }
         }
         else if (*c == ' ')
         {
-            if (in_quotes || rest_of_line)
+            if (in_quotes == true)
             {
                 *t++ = *c;
             }
@@ -196,7 +195,7 @@ static char *split(char *string, int rest_of_line)
 
     if (*t == '\0')
     {
-        return (NULL);
+        return NULL;
     }
 
     return t;
@@ -213,7 +212,7 @@ void config_init(char *fname, struct audio_s *p_audio_config, struct misc_config
     strlcpy(p_audio_config->adevice_in, DEFAULT_ADEVICE, sizeof(p_audio_config->adevice_in));
     strlcpy(p_audio_config->adevice_out, DEFAULT_ADEVICE, sizeof(p_audio_config->adevice_out));
 
-    p_audio_config->defined = 1;
+    p_audio_config->defined = false;
     p_audio_config->baud = RS;
 
     for (int ot = 0; ot < NUM_OCTYPES; ot++)
@@ -281,7 +280,7 @@ void config_init(char *fname, struct audio_s *p_audio_config, struct misc_config
     {
         line++;
 
-        char *t = split(stuff, 0);
+        char *t = split(stuff);
 
         if (t == NULL)
         {
@@ -301,7 +300,7 @@ void config_init(char *fname, struct audio_s *p_audio_config, struct misc_config
 
         if (strcasecmp(t, "adevice") == 0)
         {
-            t = split(NULL, 0);
+            t = split(NULL);
 
             if (t == NULL)
             {
@@ -312,7 +311,7 @@ void config_init(char *fname, struct audio_s *p_audio_config, struct misc_config
             strlcpy(p_audio_config->adevice_in, t, sizeof(p_audio_config->adevice_in));
             strlcpy(p_audio_config->adevice_out, t, sizeof(p_audio_config->adevice_out));
 
-            p_audio_config->defined = 1;
+            p_audio_config->defined = true;
         }
 
         /*
@@ -320,7 +319,7 @@ void config_init(char *fname, struct audio_s *p_audio_config, struct misc_config
          */
         else if (strcasecmp(t, "mycall") == 0)
         {
-            t = split(NULL, 0);
+            t = split(NULL);
 
             if (t == NULL)
             {
@@ -329,11 +328,10 @@ void config_init(char *fname, struct audio_s *p_audio_config, struct misc_config
             }
             else
             {
-                char *p;
                 char call_no_ssid[AX25_MAX_ADDR_LEN];
                 int ssid; /* not used */
 
-                for (p = t; *p != '\0'; p++)
+                for (char *p = t; *p != '\0'; p++)
                 {
                     if (islower(*p))
                     {
@@ -387,7 +385,7 @@ void config_init(char *fname, struct audio_s *p_audio_config, struct misc_config
                 strlcpy(otname, "SYN", sizeof(otname));
             }
 
-            t = split(NULL, 0);
+            t = split(NULL);
 
             if (t == NULL)
             {
@@ -397,7 +395,7 @@ void config_init(char *fname, struct audio_s *p_audio_config, struct misc_config
 
             if (strcasecmp(t, "GPIO") == 0)
             {
-                t = split(NULL, 0);
+                t = split(NULL);
 
                 if (t == NULL)
                 {
@@ -432,7 +430,7 @@ void config_init(char *fname, struct audio_s *p_audio_config, struct misc_config
 
             strlcpy(itname, "TXINH", sizeof(itname));
 
-            t = split(NULL, 0);
+            t = split(NULL);
 
             if (t == NULL)
             {
@@ -443,7 +441,7 @@ void config_init(char *fname, struct audio_s *p_audio_config, struct misc_config
 
             if (strcasecmp(t, "GPIO") == 0)
             {
-                t = split(NULL, 0);
+                t = split(NULL);
 
                 if (t == NULL)
                 {
@@ -470,7 +468,7 @@ void config_init(char *fname, struct audio_s *p_audio_config, struct misc_config
 
         else if (strcasecmp(t, "DWAIT") == 0)
         {
-            t = split(NULL, 0);
+            t = split(NULL);
 
             if (t == NULL)
             {
@@ -498,11 +496,10 @@ void config_init(char *fname, struct audio_s *p_audio_config, struct misc_config
 
         else if (strcasecmp(t, "SLOTTIME") == 0)
         {
-            t = split(NULL, 0);
+            t = split(NULL);
 
             if (t == NULL)
             {
-
                 printf("Line %d: Missing delay time for SLOTTIME command.\n", line);
                 continue;
             }
@@ -528,7 +525,7 @@ void config_init(char *fname, struct audio_s *p_audio_config, struct misc_config
 
         else if (strcasecmp(t, "PERSIST") == 0)
         {
-            t = split(NULL, 0);
+            t = split(NULL);
 
             if (t == NULL)
             {
@@ -557,7 +554,7 @@ void config_init(char *fname, struct audio_s *p_audio_config, struct misc_config
 
         else if (strcasecmp(t, "TXDELAY") == 0)
         {
-            t = split(NULL, 0);
+            t = split(NULL);
 
             if (t == NULL)
             {
@@ -586,7 +583,7 @@ void config_init(char *fname, struct audio_s *p_audio_config, struct misc_config
 
         else if (strcasecmp(t, "TXTAIL") == 0)
         {
-            t = split(NULL, 0);
+            t = split(NULL);
 
             if (t == NULL)
             {
@@ -615,11 +612,10 @@ void config_init(char *fname, struct audio_s *p_audio_config, struct misc_config
          */
         else if (strcasecmp(t, "FULLDUP") == 0)
         {
-            t = split(NULL, 0);
+            t = split(NULL);
 
             if (t == NULL)
             {
-
                 printf("Line %d: Missing parameter for FULLDUP command.  Expecting ON or OFF.\n", line);
                 continue;
             }
@@ -646,7 +642,7 @@ void config_init(char *fname, struct audio_s *p_audio_config, struct misc_config
 
         else if (strcasecmp(t, "FRACK") == 0)
         {
-            t = split(NULL, 0);
+            t = split(NULL);
 
             if (t == NULL)
             {
@@ -672,7 +668,7 @@ void config_init(char *fname, struct audio_s *p_audio_config, struct misc_config
 
         else if (strcasecmp(t, "RETRY") == 0)
         {
-            t = split(NULL, 0);
+            t = split(NULL);
 
             if (t == NULL)
             {
@@ -698,11 +694,10 @@ void config_init(char *fname, struct audio_s *p_audio_config, struct misc_config
 
         else if (strcasecmp(t, "PACLEN") == 0)
         {
-            t = split(NULL, 0);
+            t = split(NULL);
 
             if (t == NULL)
             {
-
                 printf("Line %d: Missing value for PACLEN.\n", line);
                 continue;
             }
@@ -715,7 +710,6 @@ void config_init(char *fname, struct audio_s *p_audio_config, struct misc_config
             }
             else
             {
-
                 printf("Line %d: Invalid PACLEN value. Using default %d.\n", line, p_misc_config->paclen);
             }
         }
@@ -728,7 +722,7 @@ void config_init(char *fname, struct audio_s *p_audio_config, struct misc_config
 
         else if (strcasecmp(t, "MAXFRAME") == 0)
         {
-            t = split(NULL, 0);
+            t = split(NULL);
 
             if (t == NULL)
             {
