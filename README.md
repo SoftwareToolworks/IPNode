@@ -27,6 +27,7 @@ The IL2P description says the idle symbols are supposed to be alternating ```010
 ```
 <img src="docs/actual-packet-data-spectrum.png" alt="actual spectrum" width="400"/>   
 
+This looks like about 1 kHz +/- 800 Hz or 1600 Hz bandwidth, so the emission symbol would be ```1K60J2D```.
 #### Startup
 The ```ipnode``` program runs in a loop with three threads (tx, rx, and kiss). It will read the config file ```ipnode.conf``` if available, and begin running.
 ```
