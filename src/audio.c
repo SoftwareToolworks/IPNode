@@ -30,7 +30,7 @@
 
 #define roundup1k(n) (((n) + 0x3ff) & ~0x3ff)
 
-struct adev_s
+static struct
 {
     snd_pcm_t *audio_in_handle;
     snd_pcm_t *audio_out_handle;
@@ -46,11 +46,9 @@ struct adev_s
 
     unsigned char *inbuf_ptr;
     unsigned char *outbuf_ptr;
-};
+} adev;
 
 static struct audio_s *save_audio_config_p;
-static struct adev_s adev;
-
 static int channels;
 static int bits_per_sample;
 
@@ -73,15 +71,6 @@ int audio_open(struct audio_s *pa)
 
     if (pa->defined == true)
     {
-        adev.inbuf_size_in_bytes = 0;
-        adev.inbuf_ptr = NULL;
-        adev.inbuf_len = 0;
-        adev.inbuf_next = 0;
-
-        adev.outbuf_size_in_bytes = 0;
-        adev.outbuf_ptr = NULL;
-        adev.outbuf_len = 0;
-
         /* If not specified, the device names should be "default". */
 
         strlcpy(audio_in_name, pa->adevice_in, sizeof(audio_in_name));
@@ -213,9 +202,12 @@ static int set_alsa_params(snd_pcm_t *handle, struct audio_s *pa, char *devname,
     int buf_size_in_bytes = roundup1k((val * (channels * bits_per_sample / 8) * ONE_BUF_TIME) / 1000);
 
 #if __arm__
-    /* Ugly hack for RPi. */
-    /* Reducing buffer size is fine for input but not so good for output. */
-
+    /*
+     * RPi hack
+     *
+     * Reducing buffer size is fine for input
+     * but not so good for output
+     */
     if (*inout == 'o')
     {
         buf_size_in_bytes = buf_size_in_bytes * 4;
@@ -244,9 +236,10 @@ static int set_alsa_params(snd_pcm_t *handle, struct audio_s *pa, char *devname,
         return -1;
     }
 
-    /* Driver might not like our suggested period size */
-    /* and might have another idea. */
-
+    /*
+     * Driver might not like our suggested period size
+     * and might have another idea
+     */
     err = snd_pcm_hw_params_get_period_size(hw_params, &fpp, NULL);
 
     if (err < 0)
@@ -258,10 +251,11 @@ static int set_alsa_params(snd_pcm_t *handle, struct audio_s *pa, char *devname,
 
     snd_pcm_hw_params_free(hw_params);
 
-    /* A "frame" is one sample for all channels. */
-
-    /* The read and write use units of frames, not bytes. */
-
+    /*
+     * A "frame" is one sample for all channels
+     *     
+     * The read and write use units of frames, not bytes
+     */
     adev.bytes_per_frame = snd_pcm_frames_to_bytes(handle, 1);
 
     buf_size_in_bytes = fpp * adev.bytes_per_frame;
@@ -274,6 +268,9 @@ static int set_alsa_params(snd_pcm_t *handle, struct audio_s *pa, char *devname,
     return buf_size_in_bytes;
 }
 
+/*
+ * Called by demod
+ */
 int audio_get()
 {
     int err;
@@ -291,10 +288,10 @@ int audio_get()
         }
         else if (err == 0)
         {
-
-            /* Didn't expect this, but it's not a problem. */
-            /* Wait a little while and try again. */
-
+            /*
+             * Didn't expect this, but it's not a problem
+             * Wait a little while and try again
+             */
             fprintf(stderr, "Audio input got zero bytes: %s\n", snd_strerror(err));
             SLEEP_MS(10);
 
@@ -310,7 +307,9 @@ int audio_get()
                 fprintf(stderr, "Most likely a slow CPU unable to keep up with the audio stream.\n");
             }
 
-            /* Try to recover a few times and eventually give up. */
+            /*
+             * Try to recover a few times and eventually give up
+             */
             if (++retries > 10)
             {
                 adev.inbuf_len = 0;
@@ -321,9 +320,9 @@ int audio_get()
 
             if (err == -EPIPE)
             {
-
-                /* EPIPE means overrun */
-
+                /*
+                 * EPIPE means overrun
+                 */
                 snd_pcm_recover(adev.audio_in_handle, err, 1);
             }
             else
@@ -340,19 +339,12 @@ int audio_get()
         return 0;
 }
 
-void audio_put(unsigned char c)
-{
-    adev.outbuf_ptr[adev.outbuf_len++] = c;
-
-    if (adev.outbuf_len == adev.outbuf_size_in_bytes)
-    {
-        audio_flush();
-    }
-}
-
+/*
+ * Called externally by tx.c
+ * but also internally
+ */
 void audio_flush()
 {
-    int retries = 10;
     snd_pcm_status_t *status;
 
     snd_pcm_status_alloca(&status);
@@ -375,10 +367,10 @@ void audio_flush()
     }
 
     unsigned char *psound = adev.outbuf_ptr;
+    int retries = 10;
 
     while (retries-- > 0)
     {
-
         k = snd_pcm_writei(adev.audio_out_handle, psound, adev.outbuf_len / adev.bytes_per_frame);
 
         if (k == -EPIPE)
@@ -415,14 +407,14 @@ void audio_flush()
         {
             fprintf(stderr, "Audio write took %d frames rather than %d.\n", k, adev.outbuf_len / adev.bytes_per_frame);
 
-            /* Go around again with the rest of it. */
+            // Go around again with the rest of it
 
             psound += k * adev.bytes_per_frame;
             adev.outbuf_len -= k * adev.bytes_per_frame;
         }
         else
         {
-            /* Success! */
+            // Success!
             adev.outbuf_len = 0;
             return;
         }
@@ -431,6 +423,19 @@ void audio_flush()
     fprintf(stderr, "Audio write error retry count exceeded.\n");
 
     adev.outbuf_len = 0;
+}
+
+/*
+ * Called by modulate
+ */
+void audio_put(unsigned char c)
+{
+    adev.outbuf_ptr[adev.outbuf_len++] = c;
+
+    if (adev.outbuf_len == adev.outbuf_size_in_bytes)
+    {
+        audio_flush();
+    }
 }
 
 void audio_wait()
@@ -443,7 +448,6 @@ void audio_close()
 {
     if (adev.audio_in_handle != NULL && adev.audio_out_handle != NULL)
     {
-
         audio_wait();
 
         snd_pcm_close(adev.audio_in_handle);

@@ -25,6 +25,11 @@ The IL2P description says the idle symbols are supposed to be alternating ```010
 +----------------------+-------------+---------------------+
    ramp-up transmitter     payload    ramp-down transmitter
 ```
+
+Here is what the audio looks and sounds like. This shows a series of pings, with no station answering, and the beginning is extranoues output from the chrome browser over UDP.
+
+<img src="docs/time-domain.png" alt="time-domain" width="500"/>   
+
 <img src="docs/actual-packet-data-spectrum.png" alt="actual spectrum" width="400"/>   
 
 This looks like about 1 kHz +/- 800 Hz or 1600 Hz bandwidth, so the emission symbol would be ```1K60J2D```.
