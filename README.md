@@ -1,7 +1,7 @@
 #### A 10 Meter 1200 Baud PSK IP Node
 Based on the Dire Wolf repository, it removes all the APRS, Repeaters, Beacons, FSK, and AFSK. The intent is to create a Linux based microcontroller with GPIO Push-To-Talk (PTT) Packet Radio Node transmitting QPSK. Currently set for 1200 Baud/2400 bit/s at 9600 sampling rate. It uses a Root-Raised-Cosine (RRC) matched filter on transmit and receive, and a slightly modified ```Improved L2 Protocol``` (IL2P).
 
-Designed for Internet Protocol (IP) use on 10 meters, which has a regulatory limit of 1200 Baud, and must operate in the 28.120-28.189 MHz band if automatically controlled. In theory you could input your PSK into an FM modulator, but you would have to limit the modulation Index to less than 1 radian on 10 Meters (deviation equal to the highest modulating frequency), or about 1.6 kHz deviation on HF. VHF and UHF don't have modulation index limits, and have higher symbol rate and bandwidth allowances.
+Designed for Internet Protocol (IP) use on 10 meters, which has a regulatory limit of 1200 Baud, and must operate in the **28.120-28.189 MHz** band if automatically controlled. In theory you could input your PSK into an FM modulator, but you would have to limit the modulation Index to less than 1 radian on 10 Meters (deviation equal to the highest modulating frequency), or about 1.6 kHz deviation on HF. VHF and UHF don't have modulation index limits, and have higher symbol rate and bandwidth allowances. Which is why most Amateurs use FSK on HF.
 
 The center frequency of ```1000 Hz``` was chosen to keep the signal in the audio bandpass of most radios. You could move this higher to about ```1600 Hz```, but this is the limit for most radios.
 
