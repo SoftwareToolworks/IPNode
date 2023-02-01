@@ -110,7 +110,7 @@ Internet Protocol Version 4, Src: 44.190.100.1, Dst: 239.255.255.250
 User Datagram Protocol, Src Port: 34392, Dst Port: 1900
 Simple Service Discovery Protocol
 ```
-#### FCC Enabling Regulations
+#### FCC Enabling USA Regulations
 ##### § 97.115 Third party communications.
 (c) No station may transmit third party communications while being automatically controlled ***except a station transmitting a data emission***.   
 (d) At the end of an exchange of international third party communications, the station must also transmit in the station identification procedure the call sign of the station with which a third party message was exchanged.   
