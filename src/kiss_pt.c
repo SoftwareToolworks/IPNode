@@ -64,12 +64,19 @@ void kisspt_init()
 
 static int kisspt_open_pt()
 {
-    char *pts;
-    struct termios ts;
-
     int fd = posix_openpt(O_RDWR | O_NOCTTY);
 
-    if (fd == -1 || grantpt(fd) == -1 || unlockpt(fd) == -1 || (pts = ptsname(fd)) == NULL)
+    if (fd == -1)
+    {
+        fprintf(stderr, "Fatal: Could not create pseudo terminal master\n");
+        return -1;
+    }
+
+    char *pts = ptsname(fd);
+    int grant = grantpt(fd);
+    int unlock = unlockpt(fd);
+
+    if ((grant == -1) || (unlock == -1) || (pts == NULL))
     {
         fprintf(stderr, "Fatal: Could not create pseudo terminal\n");
         return -1;
@@ -77,6 +84,7 @@ static int kisspt_open_pt()
 
     strlcpy(pt_slave_name, pts, sizeof(pt_slave_name));
 
+    struct termios ts;
     int e = tcgetattr(fd, &ts);
 
     if (e != 0)
@@ -103,7 +111,7 @@ static int kisspt_open_pt()
 
     if (e != 0)
     {
-        fprintf(stderr, "Fatal: pt fcntl Can't set pseudo terminal to nonblocking, fcntl returns %d, errno = %d\n", e, errno);
+        fprintf(stderr, "Fatal: Can't set pseudo terminal to nonblocking\n");
         return -1;
     }
 
@@ -111,7 +119,7 @@ static int kisspt_open_pt()
 
     if (pt_slave_fd < 0)
     {
-        fprintf(stderr, "Fatal: pt open Can't open %s\n", pt_slave_name);
+        fprintf(stderr, "Fatal: Can't open pseudo terminal slave %s\n", pt_slave_name);
         return -1;
     }
 
@@ -123,7 +131,7 @@ static int kisspt_open_pt()
     }
     else
     {
-        fprintf(stderr, "Fatal: pt symlink Failed to create symlink %s\n", TMP_KISSTNC_SYMLINK);
+        fprintf(stderr, "Fatal: Failed to create kiss symlink %s\n", TMP_KISSTNC_SYMLINK);
         return -1;
     }
 
@@ -173,7 +181,7 @@ void kisspt_send_rec_packet(int kiss_cmd, unsigned char *fbuf, int flen)
     }
     else if (err != kiss_len)
     {
-        fprintf(stderr, "Warning: pt write KISS pseudo terminal error: fd=%d, len=%d, write returned %d, errno = %d\n",
+        fprintf(stderr, "Warning: KISS pseudo terminal write error: fd=%d, len=%d, write returned %d, errno = %d\n",
                 pt_master_fd, kiss_len, err, errno);
     }
 }
