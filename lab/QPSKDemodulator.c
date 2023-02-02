@@ -37,6 +37,11 @@ void create_QPSKDemodulator(float sampleCounterGain)
     mReceivedSample = 0.0;
 }
 
+void destroy_QPSKDemodulator()
+{
+    destroy_interpolatingSampleBuffer();
+}
+
 static complex float cnormalize(complex float a)
 {
     float mag = cabs(a);

@@ -365,7 +365,7 @@ int main(int argc, char **argv)
     }
 
     free(recvBlock);
-    destroy_interpolatingSampleBuffer();
+    destroy_QPSKDemodulator();
 
     fclose(fin);
 

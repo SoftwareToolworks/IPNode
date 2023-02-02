@@ -57,6 +57,7 @@ Dibit getSymbolDecision(void);
 complex float getReceivedSample(void);
 
 void create_QPSKDemodulator(float);
+void destroy_QPSKDemodulator(void);
 Dibit demod_receive(complex float);
 
 #ifdef __cplusplus
