@@ -1,3 +1,3 @@
 #### Testing Lab
-An area where the Timing Estimation algorithms can be tested.
+An area where the Timing Estimation algorithms can be developed.
 
