@@ -109,72 +109,6 @@ static void processSymbols(complex float csamples[], int diBits[])
      */
     complex float decimatedSymbol = recvBlock[0];
 
-#ifdef DECODE
-    /*
-     * Find timing estimate using Shinji Tamura Method
-     */
-    float av_i = 0.0f; // reset the average
-    float av_q = 0.0f;
-
-    float real[RATE];
-    float imag[RATE];
-
-    /*
-     * Find the average val,ue of one symbol time
-     */
-    for (int i = 0; i < RATE; i++)
-    {
-        real[i] = fabsf(crealf(recvBlock[i]));
-        imag[i] = fabsf(cimagf(recvBlock[i]));
-
-        av_i += real[i];
-        av_q += imag[i];
-    }
-
-    av_i /= (float)RATE;
-    av_q /= (float)RATE;
-
-    memset(hist, 0, sizeof(int) * RATE);
-    memset(hist_i, 0, sizeof(int) * RATE);
-    memset(hist_q, 0, sizeof(int) * RATE);
-
-    for (int k = 1; k < RATE; k++)
-    {
-        if (real[k] <= (av_i / (float)k))
-        {
-            hist_i[k] += 1;
-        }
-
-        if (imag[k] <= (av_q / (float)k))
-        {
-            hist_q[k] += 1;
-        }
-    }
-
-    int hist_i[RATE];
-    int hist_q[RATE];
-    int hist[RATE];
-
-    /*
-     * Sum the I/Q histograms
-     * and index the maximum value
-     */
-    int index = 0;
-    int hmax = 0;
-
-    for (int i = 1; i < RATE; i++)
-    {
-        hist[i] = (hist_i[i] + hist_q[i]);
-
-        if (hist[i] > hmax)
-        {
-            hmax = hist[i];
-            index = i;
-        }
-    }
-
-// printf("%d ", index);
-#endif
     /*
      * Choose the highest amplitude histogram as index
      */
@@ -318,7 +252,7 @@ int main(int argc, char **argv)
     m_rxRect = cmplxconj(TAU * m_center / FS);
 
     m_txPhase = cmplx(0.0f);
-    m_txRect = cmplx(TAU * m_center / FS); // tranmit 50 Hz off frequency
+    m_txRect = cmplx(TAU * m_center / FS);
 
     m_offset_freq = m_center;
 
@@ -346,6 +280,11 @@ int main(int argc, char **argv)
      * Sample Rate, Baud, and Alpha
      */
     rrc_make(FS, RS, .35f);
+
+    /*
+     * Create Timing Error Detector (TED)
+     */
+    create_QPSKDemodulator(.3f);  // sample counter gain = .3
 
     /*
      * create the data waveform with 1000 frames
