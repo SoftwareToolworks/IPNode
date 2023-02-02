@@ -30,11 +30,11 @@ void create_QPSKDemodulator(float sampleCounterGain)
     create_symbolEvaluator();
     create_interpolatingSampleBuffer(sampleCounterGain);
 
-    mPreviousCurrentSample = 0.0;
-    mPreviousMiddleSample = 0.0;
-    mMiddleSymbol = 0.0;
-    mCurrentSymbol = 0.0;
-    mReceivedSample = 0.0;
+    mPreviousCurrentSample = 0.0f;
+    mPreviousMiddleSample = 0.0f;
+    mMiddleSymbol = 0.0f;
+    mCurrentSymbol = 0.0f;
+    mReceivedSample = 0.0f;
 }
 
 void destroy_QPSKDemodulator()
@@ -46,7 +46,7 @@ static complex float cnormalize(complex float a)
 {
     float mag = cabs(a);
 
-    if (mag != 0.0)
+    if (mag != 0.0f)
     {
         return a / mag;
     }
@@ -73,7 +73,7 @@ static Dibit calculateSymbol()
     complex float middleSample = getCurrentSample();
     complex float currentSample = getMiddleSample();
 
-    if ((middleSample == -10000.0) || (currentSample == -10000.0))
+    if ((middleSample == -10000.0f) || (currentSample == -10000.0f))
     {
         return D99;
     }

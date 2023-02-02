@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Translated from C++ by S. Sampson
+ * Translated from C++ by Software Toolworks
  */
 
 #include <stdbool.h>

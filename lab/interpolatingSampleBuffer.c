@@ -181,7 +181,7 @@ static const float TAPS[129][8] = {
  */
 void create_interpolatingSampleBuffer(float sampleCounterGain)
 {
-    mSamplingPoint = (float)RATE;   // RATE = (9600 / 1200) = 8
+    mSamplingPoint = (float)RATE; // RATE = (9600 / 1200) = 8
 
     mDetectedSamplesPerSymbol = (float)RATE;
     mMaximumSamplesPerSymbol = (float)RATE * (1.0f + MAXIMUM_DEVIATION_SAMPLES_PER_SYMBOL);
@@ -189,9 +189,9 @@ void create_interpolatingSampleBuffer(float sampleCounterGain)
 
     mTwiceSamplesPerSymbol = (int)floorf(2.0f * (float)RATE);
 
-   /*
-    * Buffer to store complex sample data and produce interpolated samples.
-    */
+    /*
+     * Buffer to store complex sample data and produce interpolated samples.
+     */
     mDelayLineSize = (2 * mTwiceSamplesPerSymbol);
 
     mDelayLineInphase = (float *)calloc(mDelayLineSize, sizeof(float));
@@ -238,7 +238,8 @@ static float interp_filter(float samples[], int offset, float mu)
     // I don't know the length of the samples array??
 
     // Ensure we have enough samples in the array
-    if ((offset + 7) >= mDelayLineSize) {	                      // I'm guessing in translation [SRS]
+    if ((offset + 7) >= mDelayLineSize)
+    { // I'm guessing in translation [SRS]
         return -1000.0f;
     }
 
@@ -394,7 +395,7 @@ complex float getPrecedingSample()
  * Interpolated current sample for the symbol.
  *
  * Note: this function should only be invoked after testing for
- * a complete symbol with the hasSymbol() method.
+ * a complete symbol with the hasSymbol() function.
  *
  * Called from QPSKDemodulator
  */
@@ -434,6 +435,7 @@ complex float getMiddleSample()
 
     // Interpolated sample that is half a symbol away from (occurred before) the current sample.
     // -10000.0 means there wasn't enough samples yet
+
     if ((re == -10000.0f) || (im == -10000.0f))
     {
         return -10000.0f;

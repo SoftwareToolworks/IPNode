@@ -2,7 +2,7 @@
  * rrc_fir.c
  *
  * Raised Cosine Low Pass Filter (LPF)
- * 
+ *
  * Software Toolworks, January 2023
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
@@ -51,7 +51,7 @@ void rrc_make(float fs, float rs, float alpha)
         float x3 = x2 * x2 - 1.f;
 
         if (fabsf(x3) >= 0.000001f) // Avoid Rounding errors...
-        { 
+        {
             if (i != NTAPS / 2)
                 num = cosf((1.f + alpha) * x1) +
                       sinf((1.f - alpha) * x1) / (4.f * alpha * xindx / spb);
