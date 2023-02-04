@@ -42,7 +42,7 @@ static FILE *fout;
 static complex float tx_filter[NTAPS]; // FIR memory
 static complex float rx_filter[NTAPS];
 
-static complex float recvBlock[RATE * 32]; // receive 8x sample buffer
+static complex float recvBlock[RATE * 32]; // receive 32 symbol 8x sample buffer
 
 static complex float m_rxPhase; // receive oscillator phase increment
 static complex float m_txPhase; // transmit oscillator phase increment
@@ -82,7 +82,7 @@ static void qpskDemodulate(complex float symbol, int outputBits[])
 static void processSymbols(complex float csamples[], int diBits[])
 {
     /*
-     * Left shift 31 old symbols in buffer
+     * Left shift 31 old symbols (248 complex samples) in buffer
      */
     for (int i = 0; i < (RATE * 31); i++)
     {
@@ -105,15 +105,20 @@ static void processSymbols(complex float csamples[], int diBits[])
     m_rxPhase /= cabsf(m_rxPhase); // normalize oscillator as magnitude can drift
 
     /*
-     * Baseband Root Cosine low-pass Filter new samples
+     * Baseband Root Cosine low-pass Filter 8x new complex samples
      */
     rrc_fir(rx_filter, &recvBlock[(RATE * 31)], RATE);
 
     complex float decisionSample;
-    int center = 20;
+
+    int center = 20; // 2 symbols + 4 samples
     int tau = 0;
 
-    for (int i = (RATE * RATE); i < (RATE * 31); i += RATE)
+    /*
+     * Start the window process after the 8th symbol starting point
+     * end before the 32nd symbol point.
+     */
+    for (int i = (RATE * 7); i < (RATE * 31); i += RATE)
     {
         complex float m_s = recvBlock[center - 1]; // Middle sample
         complex float l_s = recvBlock[center + 3]; // Late sample
