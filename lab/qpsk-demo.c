@@ -42,7 +42,7 @@ static FILE *fout;
 static complex float tx_filter[NTAPS]; // FIR memory
 static complex float rx_filter[NTAPS];
 
-static complex float *recvBlock; // receive symbol buffer
+static complex float recvBlock[RATE * 32]; // receive 8x sample buffer
 
 static complex float m_rxPhase; // receive oscillator phase increment
 static complex float m_txPhase; // transmit oscillator phase increment
@@ -77,38 +77,43 @@ static void qpskDemodulate(complex float symbol, int outputBits[])
  *
  * Remove any frequency and timing offsets
  *
- * Process one 1200 Baud symbol at 9600 rate
- * using previous samples to compute timing index.
+ * Process one new 1200 Baud symbol at 9600 rate
  */
 static void processSymbols(complex float csamples[], int diBits[])
 {
     /*
-     * Convert 9600 rate complex samples to baseband.
+     * Left shift 31 old symbols in buffer
      */
-    for (int i = 0; i < RATE; i++)
+    for (int i = 0; i < (RATE * 31); i++)
     {
-        int extended = (RATE + i);
+        recvBlock[i] = recvBlock[RATE + i];
+    }
 
+    /*
+     * Add new 9600 8x rate samples of symbol
+     */
+    for (int i = (RATE * 31), j = 0; i < ((RATE * 31) + RATE); i++, j++)
+    {
+        /*
+         * Convert 9600 rate complex samples to baseband.
+         */
         m_rxPhase *= m_rxRect;
-        recvBlock[i] = recvBlock[extended];
-        recvBlock[extended] = csamples[i] * m_rxPhase;
+
+        recvBlock[i] = csamples[j] * m_rxPhase;        
     }
 
     m_rxPhase /= cabsf(m_rxPhase); // normalize oscillator as magnitude can drift
 
     /*
-     * Baseband Root Cosine low-pass Filter
-     * Using the previous sample block.
-     *
-     * We're still at 9600 sample rate
+     * Baseband Root Cosine low-pass Filter new samples
      */
-    rrc_fir(rx_filter, recvBlock, RATE);
+    rrc_fir(rx_filter, &recvBlock[(RATE * 31)], RATE);
 
     complex float decisionSample;
-    int center = 4;
+    int center = 20;
     int tau = 0;
 
-    for (int i = 0, index = 0; i < 16; i += RATE, index++)
+    for (int i = (RATE * RATE); i < (RATE * 31); i += RATE)
     {
         complex float m_s = recvBlock[center - 1]; // Middle sample
         complex float l_s = recvBlock[center + 3]; // Late sample
@@ -116,6 +121,12 @@ static void processSymbols(complex float csamples[], int diBits[])
         decisionSample = e_s;
 
         complex float sub = (l_s - e_s) * m_s;
+
+/*
+ *********************************
+ * This part is bullcrap
+ *********************************
+ */
 
         if ((crealf(sub) != 0.0f) && cimagf(sub) != 0.0f)
             tau = -1;
@@ -257,17 +268,12 @@ int main(int argc, char **argv)
 #endif
 
     /*
-     * 16 Symbols at 8x sample rate buffer
-     */
-    recvBlock = (complex float *)calloc((RATE * 2), sizeof(complex float));
-
-    /*
      * All terms are radians per sample.
      *
      * The loop bandwidth determins the lock range
      * and should be set around TAU/100 to TAU/200
      */
-    create_control_loop((TAU / 180.0f), -1.0f, 1.0f);
+    create_control_loop((TAU / 200.0f), -1.0f, 1.0f);
 
     /*
      * Create an RRC filter using the
@@ -352,8 +358,6 @@ int main(int argc, char **argv)
          */
         processSymbols(csamples, dibitPair); // we don't do anything with the bits yet
     }
-
-    free(recvBlock);
 
     fclose(fin);
 
