@@ -19,7 +19,6 @@
 #include <math.h>
 
 #include "qpsk-demo.h"
-#include "interp.h"
 #include "costas_loop.h"
 #include "rrc_fir.h"
 
@@ -79,6 +78,7 @@ static void qpskDemodulate(complex float symbol, int outputBits[])
  * Remove any frequency and timing offsets
  *
  * Process one 1200 Baud symbol at 9600 rate
+ * using previous samples to compute timing index.
  */
 static void processSymbols(complex float csamples[], int diBits[])
 {
@@ -87,9 +87,9 @@ static void processSymbols(complex float csamples[], int diBits[])
      */
     for (int i = 0; i < RATE; i++)
     {
-        int extended = (RATE + i); // compute once
-        m_rxPhase *= m_rxRect;
+        int extended = (RATE + i);
 
+        m_rxPhase *= m_rxRect;
         recvBlock[i] = recvBlock[extended];
         recvBlock[extended] = csamples[i] * m_rxPhase;
     }
@@ -104,57 +104,53 @@ static void processSymbols(complex float csamples[], int diBits[])
      */
     rrc_fir(rx_filter, recvBlock, RATE);
 
-    /*
-     * Now decimate the 9600 rate sample to the 1200 rate.
-     */
-    complex float decimatedSymbol = recvBlock[0];
+    complex float decisionSample;
+    int center = 4;
+    int tau = 0;
 
-    /*
-     * Choose the highest amplitude histogram as index
-     */
-    if (get_costas_enable() == true)
+    for (int i = 0, index = 0; i < 16; i += RATE, index++)
     {
-        complex float costasSymbol = decimatedSymbol * cmplxconj(get_phase());
+        complex float m_s = recvBlock[center - 1]; // Middle sample
+        complex float l_s = recvBlock[center + 3]; // Late sample
+        complex float e_s = recvBlock[center - 5]; // Early sample
+        decisionSample = e_s;
 
-        /*
-         * The constellation gets rotated +45 degrees (rectangular)
-         * from what was transmitted (diamond) with costas enabled
-         */
-#ifdef TEST_SCATTER
-        fprintf(stderr, "%f %f\n", crealf(costasSymbol), cimagf(costasSymbol));
-#endif
+        complex float sub = (l_s - e_s) * m_s;
 
-        float d_error = phase_detector(costasSymbol);
+        if ((crealf(sub) != 0.0f) && cimagf(sub) != 0.0f)
+            tau = -1;
+        else
+            tau = 1;
 
-        advance_loop(d_error);
-        phase_wrap();
-        frequency_limit();
-
-        qpskDemodulate(costasSymbol, diBits);
-
-        // printf("%d%d ", diBits[0], diBits[1]);
-    }
-    else
-    {
-        /*
-         * Rotate constellation from diamond to rectangular.
-         * This makes rasier quadrant detection possible.
-         */
-        complex float decodedSymbol = decimatedSymbol * cmplxconj(ROTATE45);
-
-#ifdef TEST_SCATTER
-        fprintf(stderr, "%f %f\n", crealf(decodedSymbol), cimagf(decodedSymbol));
-#endif
-        qpskDemodulate(decodedSymbol, diBits);
-
-        // printf("%d%d ", diBits[0], diBits[1]);
+        center += (RATE + tau);
     }
 
+    complex float costasSymbol = decisionSample * cmplxconj(get_phase());
+
+    /*
+     * The constellation gets rotated +45 degrees (rectangular)
+     * from what was transmitted (diamond) with costas enabled
+     */
+#ifdef TEST_SCATTER
+    fprintf(stderr, "%f %f\n", crealf(costasSymbol), cimagf(costasSymbol));
+#endif
+
+    float d_error = phase_detector(costasSymbol);
+
+    advance_loop(d_error);
+    phase_wrap();
+    frequency_limit();
+
+    qpskDemodulate(costasSymbol, diBits);
+
+#ifdef NEW
+    *dibitPair = demod_receive(recvBlock[center]);
+#endif
     /*
      * Save the detected frequency error
      */
     m_offset_freq = (get_frequency() * m_center / TAU); // convert radians to freq at symbol rate
-    // printf("%.1f ", m_offset_freq);
+    //printf("%.1f ", m_offset_freq);
 }
 
 /*
@@ -252,14 +248,18 @@ int main(int argc, char **argv)
     m_rxRect = cmplxconj(TAU * m_center / FS);
 
     m_txPhase = cmplx(0.0f);
+#ifdef FREQ_ERROR
+    m_txRect = cmplx(TAU * (m_center + 50.0f) / FS);
+    m_offset_freq = (m_center + 50.0f);
+#else
     m_txRect = cmplx(TAU * m_center / FS);
-
     m_offset_freq = m_center;
+#endif
 
     /*
-     * 32 Symbols at 8x sample rate, twice as big as needed to buffer
+     * 16 Symbols at 8x sample rate buffer
      */
-    recvBlock = (complex float *)calloc(((RATE * 32) * 2), sizeof(complex float));
+    recvBlock = (complex float *)calloc((RATE * 2), sizeof(complex float));
 
     /*
      * All terms are radians per sample.
@@ -270,21 +270,10 @@ int main(int argc, char **argv)
     create_control_loop((TAU / 180.0f), -1.0f, 1.0f);
 
     /*
-     * Shut off the costas loop
-     * for a validity test
-     */
-    // set_costas_enable(false);
-
-    /*
      * Create an RRC filter using the
      * Sample Rate, Baud, and Alpha
      */
     rrc_make(FS, RS, .35f);
-
-    /*
-     * Create Timing Error Detector (TED)
-     */
-    create_QPSKDemodulator(.3f);  // sample counter gain = .3
 
     /*
      * create the data waveform with 1000 frames
@@ -336,7 +325,7 @@ int main(int argc, char **argv)
      * at 9600 sample rate at a time
      */
     complex float csamples[RATE];
-    int diBits[2];
+    int dibitPair[2];
     int16_t samplesIQ[(RATE * 2)]; // 8 I and 8 Q PCM samples at 8x rate
 
     while (1)
@@ -361,11 +350,10 @@ int main(int argc, char **argv)
          * We send one 1200 Baud symbol at a 9600 rate
          * to process and receive decoded bits back.
          */
-        processSymbols(csamples, diBits); // we don't do anything with the bits yet
+        processSymbols(csamples, dibitPair); // we don't do anything with the bits yet
     }
 
     free(recvBlock);
-    destroy_QPSKDemodulator();
 
     fclose(fin);
 

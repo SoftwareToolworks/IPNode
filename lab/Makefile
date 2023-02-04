@@ -1,10 +1,11 @@
 # Makefile for QPSK Demo Code
 
-SRC=qpsk-demo.c costas_loop.c rrc_fir.c interpolatingSampleBuffer.c QPSKDemodulator.c symbolEvaluator.c
-HEADER=qpsk-demo.h interp.h costas_loop.h rrc_fir.h
+SRC=qpsk-demo.c costas_loop.c rrc_fir.c 
+HEADER=qpsk-demo.h costas_loop.h rrc_fir.h
 
 qpsk-demo: ${SRC} ${HEADER}
-	gcc -std=c11 -g ${SRC} -DTEST_SCATTER -o qpsk-demo -Wall -lm
+	gcc -std=c11 -g ${SRC} -DFREQ_ERROR -DTEST_SCATTER -o qpsk-demo -Wall -lm
+#	gcc -std=c11 -g ${SRC} -DTEST_SCATTER -o qpsk-demo -Wall -lm
 
 # generate scatter diagram PNG
 
