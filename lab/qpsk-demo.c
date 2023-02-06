@@ -42,7 +42,7 @@ static FILE *fout;
 static complex float tx_filter[NTAPS]; // FIR memory
 static complex float rx_filter[NTAPS];
 
-static complex float recvBlock[RATE * 32]; // receive 32 symbol 8x sample buffer
+static complex float recvBlock[RATE * 2]; // baseband symbols 8x sample buffer
 
 static complex float m_rxPhase; // receive oscillator phase increment
 static complex float m_txPhase; // transmit oscillator phase increment
@@ -63,6 +63,23 @@ static const complex float constellation[] = {
     -1.0f + 0.0f * I // -I
 };
 
+#ifdef OLD
+/*
+ * Goofy sgn() function
+ */
+static int sgn(float x)
+{
+    /*
+     * IEEE Floating Point has -0.0
+     * so check for +/- 0.0 first
+     */
+    if (x == 0.0f)
+        return 0;
+    else
+        return (signbit(x) == 0) ? 1 : -1;
+}
+#endif
+
 /*
  * Gray coded QPSK demodulation function
  */
@@ -77,29 +94,20 @@ static void qpskDemodulate(complex float symbol, int outputBits[])
  *
  * Remove any frequency and timing offsets
  *
- * Process one new 1200 Baud symbol at 9600 rate
+ * Process one new 1200 Baud symbol at 8x 9600 rate
  */
 static void processSymbols(complex float csamples[], int diBits[])
 {
-    /*
-     * Left shift 31 old symbols (248 complex samples) in buffer
-     */
-    for (int i = 0; i < (RATE * 31); i++)
+    for (int i = 0; i < RATE; i++)
     {
-        recvBlock[i] = recvBlock[RATE + i];
-    }
+        recvBlock[i] = recvBlock[RATE + i]; // previous filtered baseband samples
 
-    /*
-     * Add new 9600 8x rate samples of symbol
-     */
-    for (int i = (RATE * 31), j = 0; i < ((RATE * 31) + RATE); i++, j++)
-    {
         /*
          * Convert 9600 rate complex samples to baseband.
          */
         m_rxPhase *= m_rxRect;
 
-        recvBlock[i] = csamples[j] * m_rxPhase;        
+        recvBlock[RATE + i] = csamples[i] * m_rxPhase;
     }
 
     m_rxPhase /= cabsf(m_rxPhase); // normalize oscillator as magnitude can drift
@@ -107,41 +115,11 @@ static void processSymbols(complex float csamples[], int diBits[])
     /*
      * Baseband Root Cosine low-pass Filter 8x new complex samples
      */
-    rrc_fir(rx_filter, &recvBlock[(RATE * 31)], RATE);
+    rrc_fir(rx_filter, &recvBlock[RATE], RATE);
 
-    complex float decisionSample;
+    /* TODO ************ Insert Timing Error Detector Here *******************************/
 
-    int center = 20; // 2 symbols + 4 samples
-    int tau = 0;
-
-    /*
-     * Start the window process after the 8th symbol starting point
-     * end before the 32nd symbol point.
-     */
-    for (int i = (RATE * 7); i < (RATE * 31); i += RATE)
-    {
-        complex float m_s = recvBlock[center - 1]; // Middle sample
-        complex float l_s = recvBlock[center + 3]; // Late sample
-        complex float e_s = recvBlock[center - 5]; // Early sample
-        decisionSample = e_s;
-
-        complex float sub = (l_s - e_s) * m_s;
-
-/*
- *********************************
- * This part is bullcrap
- *********************************
- */
-
-        if ((crealf(sub) != 0.0f) && cimagf(sub) != 0.0f)
-            tau = -1;
-        else
-            tau = 1;
-
-        center += (RATE + tau);
-    }
-
-    complex float costasSymbol = decisionSample * cmplxconj(get_phase());
+    complex float costasSymbol = recvBlock[0] * cmplxconj(get_phase());
 
     /*
      * The constellation gets rotated +45 degrees (rectangular)
@@ -159,13 +137,10 @@ static void processSymbols(complex float csamples[], int diBits[])
 
     qpskDemodulate(costasSymbol, diBits);
 
-#ifdef NEW
-    *dibitPair = demod_receive(recvBlock[center]);
-#endif
     /*
      * Save the detected frequency error
      */
-    m_offset_freq = (get_frequency() * m_center / TAU); // convert radians to freq at symbol rate
+    m_offset_freq = (get_frequency() / TAU) * m_center; // convert radians to freq at symbol rate
     //printf("%.1f ", m_offset_freq);
 }
 
