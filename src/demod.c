@@ -186,6 +186,16 @@ void processSymbols(complex float csamples[])
      */
     rrc_fir(rx_filter, recvBlock, CYCLES);
 
+/*
+ * Note:
+ * The symbol timing loop will lock regardless of whether the carrier phase is locked,
+ * but the carrier phase can't lock reliably without symbol timing being reasonably accurate.
+ *
+ * The timing synchronization must occur before carrier synchronization.
+ *
+ * Joint recovery of carrier and symbol timing (and gain and channel) is very common.
+ */
+
     /*
      * Now decimate the 9600 rate sample to the 1200 rate.
      */
