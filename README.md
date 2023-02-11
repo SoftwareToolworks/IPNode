@@ -123,4 +123,4 @@ Simple Service Discovery Protocol
 
 #### GNU Radio Experiments
 I threw together the receiver design I have so far:   
-<img src="lab/gnu-radio-flow.png" width="400" />
+<img src="lab/gnu-radio-flow1.png" width="400" />
