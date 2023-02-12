@@ -124,3 +124,7 @@ Simple Service Discovery Protocol
 #### GNU Radio Experiments
 I threw together the receiver design I have so far:   
 <img src="lab/gnu-radio-flow1.png" width="400" />
+
+What I need though, is a synchronizer, i.e. a Gardner Timing Detection Algorithm to keep both the transmit and receive clocks in sync. Here's the GNU Radio diagram for that:   
+<img src="lab/gnuradio-design.png" width="400" />
+

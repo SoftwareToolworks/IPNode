@@ -82,11 +82,11 @@ class testmodem(gr.top_block, Qt.QWidget):
         # Blocks
         ##################################################
         self.root_raised_cosine_filter_0 = filter.fir_filter_ccf(
-            8,
+            1,
             firdes.root_raised_cosine(
-                6,
+                4,
                 samp_rate,
-                1200,
+                samp_rate/8,
                 .35,
                 65))
         self.qtgui_freq_sink_x_0 = qtgui.freq_sink_c(
@@ -94,7 +94,7 @@ class testmodem(gr.top_block, Qt.QWidget):
             window.WIN_RECTANGULAR, #wintype
             0, #fc
             9600, #bw
-            "", #name
+            "Filter Output", #name
             1,
             None # parent
         )
@@ -102,7 +102,7 @@ class testmodem(gr.top_block, Qt.QWidget):
         self.qtgui_freq_sink_x_0.set_y_axis(-140, 10)
         self.qtgui_freq_sink_x_0.set_y_label('Relative Gain', 'dB')
         self.qtgui_freq_sink_x_0.set_trigger_mode(qtgui.TRIG_MODE_FREE, 0.0, 0, "")
-        self.qtgui_freq_sink_x_0.enable_autoscale(False)
+        self.qtgui_freq_sink_x_0.enable_autoscale(True)
         self.qtgui_freq_sink_x_0.enable_grid(False)
         self.qtgui_freq_sink_x_0.set_fft_average(0.2)
         self.qtgui_freq_sink_x_0.enable_axis_labels(True)
@@ -131,59 +131,9 @@ class testmodem(gr.top_block, Qt.QWidget):
 
         self._qtgui_freq_sink_x_0_win = sip.wrapinstance(self.qtgui_freq_sink_x_0.qwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_freq_sink_x_0_win)
-        self.qtgui_eye_sink_x_0 = qtgui.eye_sink_c(
-            1024, #size
-            samp_rate/8, #samp_rate
-            1, #number of inputs
-            None
-        )
-        self.qtgui_eye_sink_x_0.set_update_time(0.10)
-        self.qtgui_eye_sink_x_0.set_samp_per_symbol(1)
-        self.qtgui_eye_sink_x_0.set_y_axis(-1, 1)
-
-        self.qtgui_eye_sink_x_0.set_y_label('Amplitude', "")
-
-        self.qtgui_eye_sink_x_0.enable_tags(True)
-        self.qtgui_eye_sink_x_0.set_trigger_mode(qtgui.TRIG_MODE_FREE, qtgui.TRIG_SLOPE_POS, 0.0, 0, 0, "")
-        self.qtgui_eye_sink_x_0.enable_autoscale(False)
-        self.qtgui_eye_sink_x_0.enable_grid(False)
-        self.qtgui_eye_sink_x_0.enable_axis_labels(True)
-        self.qtgui_eye_sink_x_0.enable_control_panel(False)
-
-
-        labels = ['Signal 1', 'Signal 2', 'Signal 3', 'Signal 4', 'Signal 5',
-            'Signal 6', 'Signal 7', 'Signal 8', 'Signal 9', 'Signal 10']
-        widths = [1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1]
-        colors = ['blue', 'blue', 'blue', 'blue', 'blue',
-            'blue', 'blue', 'blue', 'blue', 'blue']
-        alphas = [1.0, 1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0, 1.0]
-        styles = [1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1]
-        markers = [-1, -1, -1, -1, -1,
-            -1, -1, -1, -1, -1]
-
-
-        for i in range(2):
-            if len(labels[i]) == 0:
-                if (i % 2 == 0):
-                    self.qtgui_eye_sink_x_0.set_line_label(i, "Eye [Re{{Data {0}}}]".format(round(i/2)))
-                else:
-                    self.qtgui_eye_sink_x_0.set_line_label(i, "Eye [Im{{Data {0}}}]".format(round((i-1)/2)))
-            else:
-                self.qtgui_eye_sink_x_0.set_line_label(i, labels[i])
-            self.qtgui_eye_sink_x_0.set_line_width(i, widths[i])
-            self.qtgui_eye_sink_x_0.set_line_color(i, colors[i])
-            self.qtgui_eye_sink_x_0.set_line_style(i, styles[i])
-            self.qtgui_eye_sink_x_0.set_line_marker(i, markers[i])
-            self.qtgui_eye_sink_x_0.set_line_alpha(i, alphas[i])
-
-        self._qtgui_eye_sink_x_0_win = sip.wrapinstance(self.qtgui_eye_sink_x_0.qwidget(), Qt.QWidget)
-        self.top_layout.addWidget(self._qtgui_eye_sink_x_0_win)
         self.qtgui_const_sink_x_0 = qtgui.const_sink_c(
             1024, #size
-            "QPSK", #name
+            "Sync Output", #name
             1, #number of inputs
             None # parent
         )
@@ -222,7 +172,19 @@ class testmodem(gr.top_block, Qt.QWidget):
 
         self._qtgui_const_sink_x_0_win = sip.wrapinstance(self.qtgui_const_sink_x_0.qwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_const_sink_x_0_win)
-        self.digital_costas_loop_cc_0 = digital.costas_loop_cc(0.0628318, 4, False)
+        self.digital_symbol_sync_xx_0 = digital.symbol_sync_cc(
+            digital.TED_GARDNER,
+            8,
+            0.0314159,
+            1,
+            1,
+            1.5,
+            1,
+            digital.constellation_qpsk().base(),
+            digital.IR_MMSE_8TAP,
+            128,
+            [])
+        self.digital_costas_loop_cc_0 = digital.costas_loop_cc(.0628318, 4, False)
         self.blocks_wavfile_source_0 = blocks.wavfile_source('/tmp/spectrum.wav', True)
         self.blocks_multiply_conjugate_cc_0 = blocks.multiply_conjugate_cc(1)
         self.blocks_float_to_complex_0 = blocks.float_to_complex(1)
@@ -232,15 +194,15 @@ class testmodem(gr.top_block, Qt.QWidget):
         ##################################################
         # Connections
         ##################################################
-        self.connect((self.analog_sig_source_x_0, 0), (self.blocks_multiply_conjugate_cc_0, 1))
-        self.connect((self.blocks_float_to_complex_0, 0), (self.blocks_multiply_conjugate_cc_0, 0))
-        self.connect((self.blocks_multiply_conjugate_cc_0, 0), (self.qtgui_freq_sink_x_0, 0))
+        self.connect((self.analog_sig_source_x_0, 0), (self.blocks_multiply_conjugate_cc_0, 0))
+        self.connect((self.blocks_float_to_complex_0, 0), (self.blocks_multiply_conjugate_cc_0, 1))
         self.connect((self.blocks_multiply_conjugate_cc_0, 0), (self.root_raised_cosine_filter_0, 0))
         self.connect((self.blocks_wavfile_source_0, 0), (self.blocks_float_to_complex_0, 0))
         self.connect((self.blocks_wavfile_source_0, 1), (self.blocks_float_to_complex_0, 1))
         self.connect((self.digital_costas_loop_cc_0, 0), (self.qtgui_const_sink_x_0, 0))
-        self.connect((self.digital_costas_loop_cc_0, 0), (self.qtgui_eye_sink_x_0, 0))
-        self.connect((self.root_raised_cosine_filter_0, 0), (self.digital_costas_loop_cc_0, 0))
+        self.connect((self.digital_symbol_sync_xx_0, 0), (self.digital_costas_loop_cc_0, 0))
+        self.connect((self.root_raised_cosine_filter_0, 0), (self.digital_symbol_sync_xx_0, 0))
+        self.connect((self.root_raised_cosine_filter_0, 0), (self.qtgui_freq_sink_x_0, 0))
 
 
     def closeEvent(self, event):
@@ -257,8 +219,7 @@ class testmodem(gr.top_block, Qt.QWidget):
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
         self.analog_sig_source_x_0.set_sampling_freq(self.samp_rate)
-        self.qtgui_eye_sink_x_0.set_samp_rate(self.samp_rate/8)
-        self.root_raised_cosine_filter_0.set_taps(firdes.root_raised_cosine(6, self.samp_rate, 1200, .35, 65))
+        self.root_raised_cosine_filter_0.set_taps(firdes.root_raised_cosine(4, self.samp_rate, self.samp_rate/8, .35, 65))
 
 
 
