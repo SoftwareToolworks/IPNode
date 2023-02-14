@@ -25,6 +25,7 @@ from gnuradio import qtgui
 from gnuradio.filter import firdes
 import sip
 from gnuradio import analog
+from gnuradio import audio
 from gnuradio import blocks
 from gnuradio import digital
 from gnuradio import filter
@@ -91,7 +92,7 @@ class testmodem(gr.top_block, Qt.QWidget):
                 65))
         self.qtgui_freq_sink_x_0 = qtgui.freq_sink_c(
             1024, #size
-            window.WIN_RECTANGULAR, #wintype
+            window.WIN_KAISER, #wintype
             0, #fc
             9600, #bw
             "Filter Output", #name
@@ -102,7 +103,7 @@ class testmodem(gr.top_block, Qt.QWidget):
         self.qtgui_freq_sink_x_0.set_y_axis(-140, 10)
         self.qtgui_freq_sink_x_0.set_y_label('Relative Gain', 'dB')
         self.qtgui_freq_sink_x_0.set_trigger_mode(qtgui.TRIG_MODE_FREE, 0.0, 0, "")
-        self.qtgui_freq_sink_x_0.enable_autoscale(True)
+        self.qtgui_freq_sink_x_0.enable_autoscale(False)
         self.qtgui_freq_sink_x_0.enable_grid(False)
         self.qtgui_freq_sink_x_0.set_fft_average(0.2)
         self.qtgui_freq_sink_x_0.enable_axis_labels(True)
@@ -182,13 +183,14 @@ class testmodem(gr.top_block, Qt.QWidget):
             1,
             digital.constellation_qpsk().base(),
             digital.IR_MMSE_8TAP,
-            128,
+            32,
             [])
-        self.digital_costas_loop_cc_0 = digital.costas_loop_cc(.0628318, 4, False)
-        self.blocks_wavfile_source_0 = blocks.wavfile_source('/tmp/spectrum.wav', True)
+        self.digital_costas_loop_cc_0 = digital.costas_loop_cc(.0314159, 4, False)
+        self.blocks_wavfile_source_0 = blocks.wavfile_source('/tmp/ipdata.wav', True)
         self.blocks_multiply_conjugate_cc_0 = blocks.multiply_conjugate_cc(1)
         self.blocks_float_to_complex_0 = blocks.float_to_complex(1)
-        self.analog_sig_source_x_0 = analog.sig_source_c(samp_rate, analog.GR_COS_WAVE, 1000, 1, 0, 0)
+        self.audio_sink_0 = audio.sink(samp_rate, '', True)
+        self.analog_sig_source_x_0 = analog.sig_source_c(samp_rate, analog.GR_COS_WAVE, 1000, .5, 0, 0)
 
 
         ##################################################
@@ -197,6 +199,7 @@ class testmodem(gr.top_block, Qt.QWidget):
         self.connect((self.analog_sig_source_x_0, 0), (self.blocks_multiply_conjugate_cc_0, 0))
         self.connect((self.blocks_float_to_complex_0, 0), (self.blocks_multiply_conjugate_cc_0, 1))
         self.connect((self.blocks_multiply_conjugate_cc_0, 0), (self.root_raised_cosine_filter_0, 0))
+        self.connect((self.blocks_wavfile_source_0, 0), (self.audio_sink_0, 0))
         self.connect((self.blocks_wavfile_source_0, 0), (self.blocks_float_to_complex_0, 0))
         self.connect((self.blocks_wavfile_source_0, 1), (self.blocks_float_to_complex_0, 1))
         self.connect((self.digital_costas_loop_cc_0, 0), (self.qtgui_const_sink_x_0, 0))
