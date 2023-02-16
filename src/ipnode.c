@@ -149,6 +149,16 @@ int main(int argc, char *argv[])
      */
     rrc_make(FS, RS, .35f);
 
+    /*
+     * Create a costas loop
+     *
+     * All terms are radians per sample.
+     *
+     * The loop bandwidth determins the lock range
+     * and should be set around TAU/100 to TAU/200
+     */
+    create_control_loop((TAU / 180.0f), -1.0f, 1.0f);
+
     dlq_init();
     ax25_link_init(&misc_config);
     il2p_init();
