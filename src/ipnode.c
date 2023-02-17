@@ -47,6 +47,7 @@
 #include "ax25_link.h"
 #include "fec.h"
 #include "il2p.h"
+#include "costas_loop.h"
 
 #define IS_DIR_SEPARATOR(c) ((c) == '/')
 

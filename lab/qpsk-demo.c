@@ -140,8 +140,8 @@ static void processSymbols(complex float csamples[], int diBits[])
     /*
      * Save the detected frequency error
      */
-    m_offset_freq = (get_frequency() / TAU) * m_center; // convert radians to freq at symbol rate
-    //printf("%.1f ", m_offset_freq);
+    m_offset_freq = (get_frequency() / TAU) * RS; // convert radians to freq at symbol rate
+    printf("%.1f ", m_offset_freq);
 }
 
 /*

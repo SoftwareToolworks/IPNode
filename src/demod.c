@@ -251,7 +251,7 @@ void processSymbols(complex float csamples[])
     /*
      * Detected frequency error
      */
-    m_offset_freq = roundf(get_frequency() * CENTER / TAU); // convert radians to freq at symbol rate
+    m_offset_freq = (get_frequency() * RS / TAU); // convert radians to freq at symbol rate
 
     /*
      * TODO Declare EOF when +/- 100 Hz error
