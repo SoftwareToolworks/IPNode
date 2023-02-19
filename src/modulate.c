@@ -37,10 +37,10 @@ static complex float m_txRect;
  * QPSK Quadrant values - Gray Coded
  */
 static const complex float qpsk[] = {
-    1.0f + 0.0f * I, // BPSK +
-    0.0f + 1.0f * I,
-    0.0f - 1.0f * I,
-    -1.0f + 0.0f * I // BPSK -
+    CMPLXF(-M_SQRT2, -M_SQRT2),  // BPSK -
+    CMPLXF(M_SQRT2, -M_SQRT2),
+    CMPLXF(-M_SQRT2, M_SQRT2),
+    CMPLXF(M_SQRT2, M_SQRT2)     // BPSK +
 };
 
 void modulate_init(struct audio_s *audio_config_p)
