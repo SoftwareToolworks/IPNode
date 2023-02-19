@@ -108,11 +108,15 @@ static void processSymbols(complex float csamples[], unsigned int *diBits)
     {
         ted_input(&recvBlock[i]);
         float val = get_error();
-
+                                            // I have no clue, this is just a punt
         if (val < error)
         {
             error = val;
             index = i;
+        }
+        else
+        {
+            revert(true);
         }
     }
 
@@ -126,13 +130,13 @@ static void processSymbols(complex float csamples[], unsigned int *diBits)
     fprintf(stderr, "%f %f\n", crealf(costasSymbol), cimagf(costasSymbol));
 #endif
 
+    *diBits = qpsk_decision_maker(costasSymbol);
+
     float d_error = phase_detector(costasSymbol);
 
     advance_loop(d_error);
     phase_wrap();
     frequency_limit();
-
-    *diBits = qpsk_decision_maker(costasSymbol);
 
     /*
      * Save the detected frequency error

@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
+#include <float.h>
 
 #include "deque.h"
 #include "constellation.h"
@@ -70,8 +71,8 @@ static void advance_input_clock()
  */
 void sync_reset()
 {
-    complex float data[1] = { CMPLXF(0.0f, 0.0f) };
-    complex float decision[1] = { CMPLXF(0.0f, 0.0f) };
+    complex float data[1] = { CMPLXF(FLT_MAX, FLT_MAX) }; // I get infinity sometimes with 0.0 init
+    complex float decision[1] = { CMPLXF(FLT_MAX, FLT_MAX) };
 
     d_error = 0.0f;
     d_prev_error = 0.0f;
@@ -79,20 +80,20 @@ void sync_reset()
     empty_deque(d_input);
     push_front(d_input, data);
     push_front(d_input, data);
-    push_front(d_input, data);  // push 3 complex zero's
+    push_front(d_input, data);  // push 3 values (left, middle, right)
 
     empty_deque(d_decision);
     push_front(d_decision, decision);
     push_front(d_decision, decision);
-    push_front(d_decision, decision);  // push 3 complex zero's
+    push_front(d_decision, decision);  // push 3 values (left, middle, right)
 
     sync_reset_input_clock();
 }
 
 void create_timing_error_detector()
 {
-    complex float data[1] = { CMPLXF(0.0f, 0.0f) };
-    complex float decision[1] = { CMPLXF(0.0f, 0.0f) };
+    complex float data[1] = { CMPLXF(FLT_MAX, FLT_MAX) }; // I get infinity sometimes with 0.0 init
+    complex float decision[1] = { CMPLXF(FLT_MAX, FLT_MAX) };
 
     d_error = 0.0f;
     d_prev_error = 0.0f;
@@ -102,22 +103,18 @@ void create_timing_error_detector()
     d_input = create_deque(); // create deque
     push_front(d_input, data);
     push_front(d_input, data);
-    push_front(d_input, data);  // push 3 complex zero's
+    push_front(d_input, data);  // push 3 values (left, middle, right)
     
     d_decision = create_deque();  // create deque
     push_front(d_decision, decision);
     push_front(d_decision, decision);
-    push_front(d_decision, decision);  // push 3 complex zero's
+    push_front(d_decision, decision);  // push 3 values (left, middle, right)
 
     sync_reset_input_clock();
 }
 
 void destroy_timing_error_detector()
 {
-    // empty the deque's
-    //empty_deque(d_decision);
-    //empty_deque(d_input);
-
     // destroy the deque's
     free(d_decision);
     free(d_input);
@@ -176,9 +173,9 @@ void revert(bool preserve_error)
 
 static float compute_error()
 {
-    complex float right = *((complex float *)get(d_input, 2));
-    complex float left = *((complex float *)get(d_input, 0));
+    complex float left =   *((complex float *)get(d_input, 0));
     complex float middle = *((complex float *)get(d_input, 1));
+    complex float right =  *((complex float *)get(d_input, 2));
 
     return ((crealf(right) - crealf(left)) * crealf(middle)) +
            ((cimagf(right) - cimagf(left)) * cimagf(middle));
