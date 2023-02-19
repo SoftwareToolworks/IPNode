@@ -58,7 +58,7 @@ void sync_reset_input_clock()
 }
 
 /*
- * Advance the TED input clock, so the input() methods will
+ * Advance the TED input clock, so the input() function will
  * compute the TED error term at the proper symbol sampling instant.
  */
 static void advance_input_clock()

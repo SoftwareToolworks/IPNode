@@ -104,9 +104,19 @@ static void processSymbols(complex float csamples[], unsigned int *diBits)
     float error = FLT_MAX;
     int index = 0;
 
+    /*
+     * Receive the 8x samples into the queue
+     * one sample at a time
+     */
     for (int i = 0; i < RATE; i++)
     {
         ted_input(&recvBlock[i]);
+
+        /*
+         * error will be updated at right time
+         * else repeat
+         */
+
         float val = get_error();
                                             // I have no clue, this is just a punt
         if (val < error)
@@ -116,10 +126,14 @@ static void processSymbols(complex float csamples[], unsigned int *diBits)
         }
         else
         {
-            revert(true);
+            revert(true); // val is a larger value, so move back a sample
         }
     }
 
+    /*
+     * By picking the best sample out of 8 we
+     * are also decimating by 8
+     */
     complex float costasSymbol = recvBlock[index] * cmplxconj(get_phase());
 
     /*
