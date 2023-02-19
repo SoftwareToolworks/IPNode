@@ -99,8 +99,8 @@ void demod_init(struct audio_s *pa)
  */
 static void qpskDemodulate(complex float symbol, int outputBits[])
 {
-    outputBits[0] = crealf(symbol) < 0.0f; // I < 0 ?
-    outputBits[1] = cimagf(symbol) < 0.0f; // Q < 0 ?
+    outputBits[0] = crealf(symbol) > 0.0f; // I > 0 ?
+    outputBits[1] = cimagf(symbol) > 0.0f; // Q > 0 ?
 }
 
 bool demod_get_samples(complex float csamples[])
