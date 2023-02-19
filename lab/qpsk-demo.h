@@ -30,6 +30,7 @@ extern "C"
 #define M_PI 3.14159265358979323846
 #endif
 
+#define M_SQRT2 1.41421356237309504880
 #define TAU (2.0 * M_PI)
 #define ROTATE45 (M_PI / 4.0)
 

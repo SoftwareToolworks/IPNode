@@ -10,7 +10,7 @@
 #include <complex.h>
 
 #include "constellation.h"
-#include "local_math.h"
+#include "qpsk-demo.h"
 
 complex float d_constellation[4];
 

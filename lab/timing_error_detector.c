@@ -7,16 +7,16 @@
  */
 
 #include <complex.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
 
 #include "deque.h"
 #include "constellation.h"
-#include "local_math.h"
 #include "timing_error_detector.h"
 
-static complex float d_constellation[4];
+// BSS Storage
 
 static float d_error;
 static float d_prev_error;
@@ -27,6 +27,14 @@ static int d_error_depth;
 
 static deque *d_input;
 static deque *d_decision;
+
+// Prototypes
+
+static void slice(complex float *, complex float *);
+static float compute_error(void);
+static void advance_input_clock(void);
+
+// Functions
 
 /*
  * Revert the TED input clock one step
@@ -62,8 +70,8 @@ static void advance_input_clock()
  */
 void sync_reset()
 {
-    complex float data[1] = CMPLXF(0.0f, 0.0f);
-    complex float decision[1] = CMPLXF(0.0f, 0.0f);
+    complex float data[1] = { CMPLXF(0.0f, 0.0f) };
+    complex float decision[1] = { CMPLXF(0.0f, 0.0f) };
 
     d_error = 0.0f;
     d_prev_error = 0.0f;
@@ -81,10 +89,10 @@ void sync_reset()
     sync_reset_input_clock();
 }
 
-void timing_error_detector()
+void create_timing_error_detector()
 {
-    complex float data[1] = CMPLXF(0.0f, 0.0f);
-    complex float decision[1] = CMPLXF(0.0f, 0.0f);
+    complex float data[1] = { CMPLXF(0.0f, 0.0f) };
+    complex float decision[1] = { CMPLXF(0.0f, 0.0f) };
 
     d_error = 0.0f;
     d_prev_error = 0.0f;
@@ -101,31 +109,41 @@ void timing_error_detector()
     push_front(d_decision, decision);
     push_front(d_decision, decision);  // push 3 complex zero's
 
-    sync_reset();
+    sync_reset_input_clock();
 }
 
-complex float *slice(complex float *x)
+void destroy_timing_error_detector()
 {
-    unsigned int index;
-    complex float z[1];
+    // empty the deque's
+    //empty_deque(d_decision);
+    //empty_deque(d_input);
 
-    index = qpsk_decision_maker(*x);
+    // destroy the deque's
+    free(d_decision);
+    free(d_input);
+}
+
+static void slice(complex float *z, complex float *x)
+{
+    unsigned int index = qpsk_decision_maker(*x);
     map_to_points(index, z);
-
-    return z;
 }
 
 /*
  * Provide a complex input sample to the TED algorithm
  *
- * @param x the input sample
+ * @param x is pointer to the input sample
  */
-void input(complex float *x)
+void ted_input(complex float *x)
 {
+    complex float z[1];
+
     push_front(d_input, x);
     pop_back(d_input); // throw away
 
-    push_front(d_decision, slice(&d_input));
+    slice(z, get(d_input, 0));
+
+    push_front(d_decision, z);
     pop_back(d_decision); // throw away
 
     advance_input_clock();
@@ -156,10 +174,10 @@ void revert(bool preserve_error)
     pop_front(d_input);  // throw away
 }
 
-float compute_error()
+static float compute_error()
 {
     complex float right = *((complex float *)get(d_input, 2));
-    complex float left = *((complex float *)get(d_input, 9));
+    complex float left = *((complex float *)get(d_input, 0));
     complex float middle = *((complex float *)get(d_input, 1));
 
     return ((crealf(right) - crealf(left)) * crealf(middle)) +
@@ -169,7 +187,7 @@ float compute_error()
 /*
  * Return the current symbol timing error estimate
  */
-float error()
+float get_error()
 {
     return d_error;
 }
@@ -178,7 +196,7 @@ float error()
  * Return the number of input samples per symbol this timing
  * error detector algorithm requires.
  */
-int inputs_per_symbol()
+int get_inputs_per_symbol()
 {
     return d_inputs_per_symbol;
 }

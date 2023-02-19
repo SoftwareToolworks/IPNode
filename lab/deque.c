@@ -1,5 +1,9 @@
 /*
- * Yash Tulsiani
+ * Original by Yash Tulsiani
+ *
+ * Converted to C by Software Toolworks
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <stdlib.h>
@@ -23,7 +27,6 @@ typedef struct dnode
  */
 static node *create_node(void *data)
 {
-    /// @todo Implement changing the return value!
     node *newNode = (node *)calloc(1, sizeof(node));
 
     // error
@@ -77,6 +80,7 @@ void push_front(deque *d, void *data)
     {
         return;
     }
+
     node *newNode = create_node(data);
 
     if (d->size == 0)
@@ -108,7 +112,9 @@ void push_back(deque *d, void *data)
     {
         return;
     }
+
     node *newNode = create_node(data);
+
     if (d->size == 0)
     {
         d->head = newNode;
@@ -120,6 +126,7 @@ void push_back(deque *d, void *data)
         d->tail->next = newNode;
         d->tail = newNode;
     }
+
     d->size++;
 }
 

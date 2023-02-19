@@ -17,24 +17,27 @@
 #include <string.h>
 #include <time.h>
 #include <math.h>
+#include <float.h>
 
 #include "qpsk-demo.h"
 #include "costas_loop.h"
 #include "rrc_fir.h"
+#include "constellation.h"
+#include "timing_error_detector.h"
 
 // Externals
 
 extern float coeffs[]; // RRC LPF FIR coefficients
+extern complex float d_constellation[];
 
 // Prototypes
 
-static void qpskDemodulate(complex float, int[]);
-static void processSymbols(complex float[], int[]);
+static void processSymbols(complex float[], unsigned int *);
 static complex float qpskModulate(int[]);
 static void txBlock(int16_t[], complex float[], int);
 static void blockModulate(int16_t[], int[], int);
 
-// Globals
+// BSS Storage
 
 static FILE *fin; // simulated ether
 static FILE *fout;
@@ -42,7 +45,7 @@ static FILE *fout;
 static complex float tx_filter[NTAPS]; // FIR memory
 static complex float rx_filter[NTAPS];
 
-static complex float recvBlock[RATE * 2]; // baseband symbols 8x sample buffer
+static complex float recvBlock[RATE]; // baseband symbols 8x sample buffer
 
 static complex float m_rxPhase; // receive oscillator phase increment
 static complex float m_txPhase; // transmit oscillator phase increment
@@ -53,15 +56,7 @@ static complex float m_txRect; // transmit oscillator
 static float m_offset_freq; // measured receive phase offset in Hertz
 static float m_center;      // passband oscillator center carrier frequency
 
-/*
- * QPSK Quadrant bit-pair values - Gray Coded
- */
-static const complex float constellation[] = {
-    1.0f + 0.0f * I, //  I
-    0.0f + 1.0f * I, //  Q
-    0.0f - 1.0f * I, // -Q
-    -1.0f + 0.0f * I // -I
-};
+// Functions
 
 #ifdef OLD
 /*
@@ -81,33 +76,22 @@ static int sgn(float x)
 #endif
 
 /*
- * Gray coded QPSK demodulation function
- */
-static void qpskDemodulate(complex float symbol, int outputBits[])
-{
-    outputBits[0] = crealf(symbol) < 0.0f; // I < 0 ?
-    outputBits[1] = cimagf(symbol) < 0.0f; // Q < 0 ?
-}
-
-/*
  * QPSK Receive function
  *
  * Remove any frequency and timing offsets
  *
  * Process one new 1200 Baud symbol at 8x 9600 rate
  */
-static void processSymbols(complex float csamples[], int diBits[])
+static void processSymbols(complex float csamples[], unsigned int *diBits)
 {
     for (int i = 0; i < RATE; i++)
     {
-        recvBlock[i] = recvBlock[RATE + i]; // previous filtered baseband samples
-
         /*
          * Convert 9600 rate complex samples to baseband.
          */
         m_rxPhase *= m_rxRect;
 
-        recvBlock[RATE + i] = csamples[i] * m_rxPhase;
+        recvBlock[i] = csamples[i] * m_rxPhase;
     }
 
     m_rxPhase /= cabsf(m_rxPhase); // normalize oscillator as magnitude can drift
@@ -115,11 +99,24 @@ static void processSymbols(complex float csamples[], int diBits[])
     /*
      * Baseband Root Cosine low-pass Filter 8x new complex samples
      */
-    rrc_fir(rx_filter, &recvBlock[RATE], RATE);
+    rrc_fir(rx_filter, recvBlock, RATE);
 
-    /* TODO ************ Insert Timing Error Detector Here *******************************/
+    float error = FLT_MAX;
+    int index = 0;
 
-    complex float costasSymbol = recvBlock[0] * cmplxconj(get_phase());
+    for (int i = 0; i < RATE; i++)
+    {
+        ted_input(&recvBlock[i]);
+        float val = get_error();
+
+        if (val < error)
+        {
+            error = val;
+            index = i;
+        }
+    }
+
+    complex float costasSymbol = recvBlock[index] * cmplxconj(get_phase());
 
     /*
      * The constellation gets rotated +45 degrees (rectangular)
@@ -135,13 +132,13 @@ static void processSymbols(complex float csamples[], int diBits[])
     phase_wrap();
     frequency_limit();
 
-    qpskDemodulate(costasSymbol, diBits);
+    *diBits = qpsk_decision_maker(costasSymbol);
 
     /*
      * Save the detected frequency error
      */
     m_offset_freq = (get_frequency() / TAU) * RS; // convert radians to freq at symbol rate
-    printf("%.1f ", m_offset_freq);
+    //printf("%.1f ", m_offset_freq);
 }
 
 /*
@@ -203,7 +200,7 @@ static void txBlock(int16_t out_samples[], complex float symbols[], int length)
  */
 static complex float qpskModulate(int inputBits[])
 {
-    return constellation[(inputBits[1] << 1) | inputBits[0]];
+    return d_constellation[(inputBits[0] << 1) | inputBits[1]];
 }
 
 /*
@@ -246,6 +243,9 @@ int main(int argc, char **argv)
     m_txRect = cmplx(TAU * m_center / FS);
     m_offset_freq = m_center;
 #endif
+
+    create_constellation_qpsk();
+    create_timing_error_detector();
 
     /*
      * All terms are radians per sample.
@@ -311,7 +311,7 @@ int main(int argc, char **argv)
      * at 9600 sample rate at a time
      */
     complex float csamples[RATE];
-    int dibitPair[2];
+    unsigned int dibitPair;
     int16_t samplesIQ[(RATE * 2)]; // 8 I and 8 Q PCM samples at 8x rate
 
     while (1)
@@ -336,10 +336,12 @@ int main(int argc, char **argv)
          * We send one 1200 Baud symbol at a 9600 rate
          * to process and receive decoded bits back.
          */
-        processSymbols(csamples, dibitPair); // we don't do anything with the bits yet
+        processSymbols(csamples, &dibitPair); // we don't do anything with the bits yet
     }
 
     fclose(fin);
+
+    destroy_timing_error_detector();
 
     return (EXIT_SUCCESS);
 }

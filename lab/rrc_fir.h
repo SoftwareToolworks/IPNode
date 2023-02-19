@@ -18,7 +18,7 @@ extern "C"
 #include "qpsk-demo.h"
 
 #define NTAPS 65
-#define GAIN 1.85  // Experimentally derived
+#define GAIN 1.55  // Experimentally derived
 
     void rrc_fir(complex float[], complex float[], int);
     void rrc_make(float, float, float);

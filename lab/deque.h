@@ -1,5 +1,9 @@
 /*
- * Yash Tulsiani
+ * Original by Yash Tulsiani
+ *
+ * Converted to C by Software Toolworks
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 #pragma once
 
