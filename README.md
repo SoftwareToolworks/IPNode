@@ -11,13 +11,13 @@ The Improved Level 2 Protocol (IL2P) was built upon AX.25 Version 2.0, thus a lo
 
 The modem uses the ALSA Linux Soundcard 16-bit stereo channel PCM, at a fixed 9.6 kHz sample rate. The network interface uses a Linux pseudo-terminal running the KISS protocol. This interfaces to the AX.25 Level 3 networking using the ```kissattach``` program, making the modem routable over IP.
 #### Status
-Ubuntu desktop is used for development. The PTT code is currently commented out to prevent core dumps, as the desktop doesn't have the GPIO, but the idea is to run this on a Linux microcontroller when fully developed. The receive EOF logic is not well thought out.
+Ubuntu desktop is used for development. The PTT code is currently commented out to prevent core dumps, as the desktop doesn't have the GPIO, but the idea is to run this on a Linux microcontroller when fully developed.   
 
 The GPIO will have PTT, DCD, Connect, and Sync as interface lines.
 
 The demod.c file is under development. The Timing Estimation (TED) is experimental and taken from GNU Radio from their Gardner TED example. The scatter diagram looks OK, with some looking better than others. Maybe 1 out of 10 being perfect. This is with random numbers.
 
-While the TED seems to be producing good output, I need to start work on the Data Carrier Detect (DCD) logic.
+While the TED seems to be producing good output, I need to start work on the Data Carrier Detect (DCD) and End Of File (EOF) logic.
 #### Notes
 The IL2P description says the idle symbols are supposed to be alternating ```0101``` binary during ```txdelay``` and ```txtail``` but this doesn't work for PSK, so we send '00' and '11' for QPSK. This results in a BPSK signal 1000 Hz center frequency.
 
