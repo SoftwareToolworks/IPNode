@@ -32,6 +32,9 @@
 #include "costas_loop.h"
 #include "rrc_fir.h"
 #include "ptt.h"
+#include "constellation.h"
+#include "timing_error_detector.h"
+#include <float.h>
 
 // Globals
 
@@ -42,7 +45,7 @@ static complex float rx_filter[NTAPS];
 static complex float m_rxPhase;
 static complex float m_rxRect;
 
-static complex float recvBlock[16]; // CYCLES * 2 double length receive sample buffer
+static complex float recvBlock[8]; // CYCLES
 
 float m_offset_freq;
 
@@ -92,15 +95,6 @@ void demod_init(struct audio_s *pa)
 
     D->quick_attack = 0.080f * 0.2f;
     D->sluggish_decay = 0.00012f * 0.2f;
-}
-
-/*
- * Gray coded QPSK demodulation function
- */
-static void qpskDemodulate(complex float symbol, int outputBits[])
-{
-    outputBits[0] = crealf(symbol) > 0.0f; // I > 0 ?
-    outputBits[1] = cimagf(symbol) > 0.0f; // Q > 0 ?
 }
 
 bool demod_get_samples(complex float csamples[])
@@ -160,7 +154,7 @@ int demod_get_audio_level(struct demodulator_state_s *D)
  */
 void processSymbols(complex float csamples[])
 {
-    int diBits[2];
+    unsigned int diBits;
 
     struct demodulator_state_s *D = &demodulator_state;
 
@@ -169,11 +163,9 @@ void processSymbols(complex float csamples[])
      */
     for (int i = 0; i < CYCLES; i++)
     {
-        int extended = (CYCLES + i); // compute once
         m_rxPhase *= m_rxRect;
 
-        recvBlock[i] = recvBlock[extended];
-        recvBlock[extended] = csamples[i] * m_rxPhase;
+        recvBlock[i] = csamples[i] * m_rxPhase;
     }
 
     m_rxPhase /= cabsf(m_rxPhase); // normalize oscillator as magnitude can drift
@@ -186,20 +178,38 @@ void processSymbols(complex float csamples[])
      */
     rrc_fir(rx_filter, recvBlock, CYCLES);
 
-/*
- * Note:
- * The symbol timing loop will lock regardless of whether the carrier phase is locked,
- * but the carrier phase can't lock reliably without symbol timing being reasonably accurate.
- *
- * The timing synchronization must occur before carrier synchronization.
- *
- * Joint recovery of carrier and symbol timing (and gain and channel) is very common.
- */
+    float error = FLT_MAX;
+    int index = 0;
+
+    /*
+     * Receive the 8x samples into the queue
+     * one sample at a time
+     */
+    for (int i = 0; i < CYCLES; i++)
+    {
+        ted_input(&recvBlock[i]);
+
+        /*
+         * error will be updated at right time
+         * else repeat
+         */
+        float val = get_error();
+                                            // I have no clue, this is just a punt
+        if (val < error)
+        {
+            error = val;
+            index = i;
+        }
+        else
+        {
+            revert(true); // val is a larger value, so move back a sample
+        }
+    }
 
     /*
      * Now decimate the 9600 rate sample to the 1200 rate.
      */
-    complex float decimatedSymbol = recvBlock[0];
+    complex float decimatedSymbol = recvBlock[index];
 
     float fsam = cnormf(decimatedSymbol);
 
@@ -225,6 +235,8 @@ void processSymbols(complex float csamples[])
     {
         complex float costasSymbol = decimatedSymbol * cmplxconj(get_phase());
 
+        diBits = qpsk_decision_maker(costasSymbol);
+
         /*
          * The constellation gets rotated +45 degrees (rectangular)
          * from what was transmitted (diamond) with costas enabled
@@ -234,8 +246,6 @@ void processSymbols(complex float csamples[])
         advance_loop(d_error);
         phase_wrap();
         frequency_limit();
-
-        qpskDemodulate(costasSymbol, diBits);
     }
     else
     {
@@ -245,7 +255,7 @@ void processSymbols(complex float csamples[])
          */
         complex float decodedSymbol = decimatedSymbol * cmplxconj(ROTATE45);
 
-        qpskDemodulate(decodedSymbol, diBits);
+        diBits = qpsk_decision_maker(decodedSymbol);
     }
 
     /*
@@ -265,6 +275,6 @@ void processSymbols(complex float csamples[])
     /*
      * Add to the output stream MSB first
      */
-    il2p_rec_bit((diBits[0] >> 1) & 0x1);
-    il2p_rec_bit(diBits[1] & 0x1);
+    il2p_rec_bit((diBits >> 1) & 0x1);
+    il2p_rec_bit(diBits & 0x1);
 }
