@@ -48,6 +48,7 @@
 #include "fec.h"
 #include "il2p.h"
 #include "costas_loop.h"
+#include "constellation.h"
 
 #define IS_DIR_SEPARATOR(c) ((c) == '/')
 
@@ -143,6 +144,8 @@ int main(int argc, char *argv[])
         SLEEP_SEC(5);
         exit(1);
     }
+
+    createQPSKConstellation();
 
     /*
      * Create an RRC filter using the

@@ -18,6 +18,7 @@ void create_timing_error_detector(void);
 void destroy_timing_error_detector(void);
 void ted_input(complex float *);
 void revert(bool);
+complex float getMiddleSample(void);
 float get_error(void);
 int get_inputs_per_symbol(void);
 

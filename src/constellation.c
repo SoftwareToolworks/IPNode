@@ -10,25 +10,29 @@
 #include <complex.h>
 
 #include "constellation.h"
-#include "ipnode.h"
 
-complex float d_constellation[4];
+static complex float d_qpsk[4];
 
-void create_constellation_qpsk()
+void createQPSKConstellation()
 {
     // Gray-coded
-    d_constellation[0] = CMPLXF(-M_SQRT2, -M_SQRT2);
-    d_constellation[1] = CMPLXF(M_SQRT2, -M_SQRT2);
-    d_constellation[2] = CMPLXF(-M_SQRT2, M_SQRT2);
-    d_constellation[3] = CMPLXF(M_SQRT2, M_SQRT2);
+    d_qpsk[0] = CMPLXF(-SQRT2, -SQRT2);
+    d_qpsk[1] = CMPLXF(SQRT2, -SQRT2);
+    d_qpsk[2] = CMPLXF(-SQRT2, SQRT2);
+    d_qpsk[3] = CMPLXF(SQRT2, SQRT2);
 }
 
-void map_to_points(unsigned int index, complex float *points)
+complex float *getQPSKConstellation()
 {
-    *points = d_constellation[index];
+    return d_qpsk;
 }
 
-unsigned int qpsk_decision_maker(complex float sample)
+complex float getQPSKQuadrant(unsigned int diBit)
+{
+    return d_qpsk[diBit];
+}
+
+unsigned int qpskToDiBit(complex float sample)
 {
     // Real component determines small bit.
     // Imag component determines big bit.

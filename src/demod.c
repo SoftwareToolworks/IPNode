@@ -34,7 +34,6 @@
 #include "ptt.h"
 #include "constellation.h"
 #include "timing_error_detector.h"
-#include <float.h>
 
 // Globals
 
@@ -44,7 +43,6 @@ static struct demodulator_state_s demodulator_state;
 static complex float rx_filter[NTAPS];
 static complex float m_rxPhase;
 static complex float m_rxRect;
-
 static complex float recvBlock[8]; // CYCLES
 
 float m_offset_freq;
@@ -172,46 +170,22 @@ void processSymbols(complex float csamples[])
 
     /*
      * Baseband Root Cosine low-pass Filter
-     * Using the previous sample block.
      *
      * We're still at 9600 sample rate
      */
     rrc_fir(rx_filter, recvBlock, CYCLES);
 
-    float error = FLT_MAX;
-    int index = 0;
-
     /*
-     * Receive the 8x samples into the queue
-     * one sample at a time
+     * Decimate by 4 for TED calculation (two samples per symbol)
      */
-    for (int i = 0; i < CYCLES; i++)
+    for (int i = 0; i < CYCLES; i += 4)
     {
         ted_input(&recvBlock[i]);
-
-        /*
-         * error will be updated at right time
-         * else repeat
-         */
-        float val = get_error();
-                                            // I have no clue, this is just a punt
-        if (val < error)
-        {
-            error = val;
-            index = i;
-        }
-        else
-        {
-            revert(true); // val is a larger value, so move back a sample
-        }
     }
 
-    /*
-     * Now decimate the 9600 rate sample to the 1200 rate.
-     */
-    complex float decimatedSymbol = recvBlock[index];
+    complex float decision = getMiddleSample(); // use middle sample
 
-    float fsam = cnormf(decimatedSymbol);
+    float fsam = cnormf(decision);
 
     if (fsam >= D->alevel_rec_peak)
     {
@@ -233,9 +207,9 @@ void processSymbols(complex float csamples[])
 
     if (get_costas_enable() == true)
     {
-        complex float costasSymbol = decimatedSymbol * cmplxconj(get_phase());
+        complex float costasSymbol = decision * cmplxconj(get_phase());
 
-        diBits = qpsk_decision_maker(costasSymbol);
+        diBits = qpskToDiBit(costasSymbol);
 
         /*
          * The constellation gets rotated +45 degrees (rectangular)
@@ -253,9 +227,9 @@ void processSymbols(complex float csamples[])
          * Rotate constellation from diamond to rectangular.
          * This makes easier quadrant detection possible.
          */
-        complex float decodedSymbol = decimatedSymbol * cmplxconj(ROTATE45);
+        complex float decodedSymbol = decision * cmplxconj(ROTATE45);
 
-        diBits = qpsk_decision_maker(decodedSymbol);
+        diBits = qpskToDiBit(decodedSymbol);
     }
 
     /*
@@ -264,9 +238,9 @@ void processSymbols(complex float csamples[])
     m_offset_freq = (get_frequency() * RS / TAU); // convert radians to freq at symbol rate
 
     /*
-     * TODO Declare EOF when +/- 100 Hz error
+     * Declare EOF when +/- 58 Hz error
      */
-    if ((m_offset_freq > (CENTER + 99.0f)) || (m_offset_freq < (CENTER - 99.0f)))
+    if ((m_offset_freq > (CENTER + 58.0f)) || (m_offset_freq < (CENTER - 58.0f)))
     {
         m_offset_freq = 9999.0f; // EOF
         return;

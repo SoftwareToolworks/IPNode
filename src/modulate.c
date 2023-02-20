@@ -20,6 +20,7 @@
 #include "audio.h"
 #include "rrc_fir.h"
 #include "modulate.h"
+#include "constellation.h"
 
 // Properties of the digitized sound stream & modem.
 
@@ -33,15 +34,7 @@ static complex float tx_filter[NTAPS];
 static complex float m_txPhase;
 static complex float m_txRect;
 
-/*
- * QPSK Quadrant values - Gray Coded
- */
-static const complex float qpsk[] = {
-    CMPLXF(-M_SQRT2, -M_SQRT2),  // BPSK -
-    CMPLXF(M_SQRT2, -M_SQRT2),
-    CMPLXF(-M_SQRT2, M_SQRT2),
-    CMPLXF(M_SQRT2, M_SQRT2)     // BPSK +
-};
+static complex float *m_qpsk;
 
 void modulate_init(struct audio_s *audio_config_p)
 {
@@ -54,6 +47,8 @@ void modulate_init(struct audio_s *audio_config_p)
 
     m_txRect = cmplx((TAU * CENTER) / FS);
     m_txPhase = cmplx(0.0f);
+    
+    m_qpsk = getQPSKConstellation();
 }
 
 /*
@@ -119,7 +114,7 @@ void put_bit(unsigned char bit)
 
     unsigned char dibit = (save_bit << 1) | bit;
 
-    tx_symbol(qpsk[dibit]);
+    tx_symbol(getQPSKQuadrant(dibit));
 
     save_bit = 0; // reset for next bits
     bit_count = 0;

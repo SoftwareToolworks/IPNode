@@ -11,7 +11,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
-#include <float.h>
 
 #include "deque.h"
 #include "constellation.h"
@@ -24,14 +23,11 @@ static float d_prev_error;
 
 static int d_inputs_per_symbol;
 static int d_input_clock;
-static int d_error_depth;
 
 static deque *d_input;
-static deque *d_decision;
 
 // Prototypes
 
-static void slice(complex float *, complex float *);
 static float compute_error(void);
 static void advance_input_clock(void);
 
@@ -71,8 +67,7 @@ static void advance_input_clock()
  */
 void sync_reset()
 {
-    complex float data[1] = { CMPLXF(FLT_MAX, FLT_MAX) }; // I get infinity sometimes with 0.0 init
-    complex float decision[1] = { CMPLXF(FLT_MAX, FLT_MAX) };
+    complex float data[1] = { CMPLXF(0.0f, 0.0f) };
 
     d_error = 0.0f;
     d_prev_error = 0.0f;
@@ -80,50 +75,30 @@ void sync_reset()
     empty_deque(d_input);
     push_front(d_input, data);
     push_front(d_input, data);
-    push_front(d_input, data);  // push 3 values (left, middle, right)
-
-    empty_deque(d_decision);
-    push_front(d_decision, decision);
-    push_front(d_decision, decision);
-    push_front(d_decision, decision);  // push 3 values (left, middle, right)
+    push_front(d_input, data);
 
     sync_reset_input_clock();
 }
 
 void create_timing_error_detector()
 {
-    complex float data[1] = { CMPLXF(FLT_MAX, FLT_MAX) }; // I get infinity sometimes with 0.0 init
-    complex float decision[1] = { CMPLXF(FLT_MAX, FLT_MAX) };
+    complex float data[1] = { CMPLXF(0.0f, 0.0f) };
 
     d_error = 0.0f;
     d_prev_error = 0.0f;
     d_inputs_per_symbol = 2; // The input samples per symbol required
-    d_error_depth = 3;       // The number of input samples required to compute the error
 
-    d_input = create_deque(); // create deque
+    d_input = create_deque();
     push_front(d_input, data);
     push_front(d_input, data);
-    push_front(d_input, data);  // push 3 values (left, middle, right)
+    push_front(d_input, data);
     
-    d_decision = create_deque();  // create deque
-    push_front(d_decision, decision);
-    push_front(d_decision, decision);
-    push_front(d_decision, decision);  // push 3 values (left, middle, right)
-
     sync_reset_input_clock();
 }
 
 void destroy_timing_error_detector()
 {
-    // destroy the deque's
-    free(d_decision);
     free(d_input);
-}
-
-static void slice(complex float *z, complex float *x)
-{
-    unsigned int index = qpsk_decision_maker(*x);
-    map_to_points(index, z);
 }
 
 /*
@@ -133,15 +108,8 @@ static void slice(complex float *z, complex float *x)
  */
 void ted_input(complex float *x)
 {
-    complex float z[1];
-
     push_front(d_input, x);
     pop_back(d_input); // throw away
-
-    slice(z, get(d_input, 0));
-
-    push_front(d_decision, z);
-    pop_back(d_decision); // throw away
 
     advance_input_clock();
 
@@ -164,9 +132,6 @@ void revert(bool preserve_error)
 
     revert_input_clock();
 
-    push_back(d_decision, back(d_decision));
-    pop_front(d_decision);  // throw away
-
     push_back(d_input, back(d_input));
     pop_front(d_input);  // throw away
 }
@@ -179,6 +144,11 @@ static float compute_error()
 
     return ((crealf(right) - crealf(left)) * crealf(middle)) +
            ((cimagf(right) - cimagf(left)) * cimagf(middle));
+}
+
+complex float getMiddleSample()
+{
+    return *((complex float *)get(d_input, 1));
 }
 
 /*

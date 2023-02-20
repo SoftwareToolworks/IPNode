@@ -31,7 +31,6 @@ extern "C"
 #endif
 
 #define TAU (2.0 * M_PI)
-#define M_SQRT2 1.41421356237309504880
 #define ROTATE45 (M_PI / 4.0)
 
 #define CENTER 1000.0

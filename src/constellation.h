@@ -8,6 +8,12 @@
 
 #pragma once
 
-void create_constellation_qpsk(void);
-void map_to_points(unsigned int, complex float *);
-unsigned int qpsk_decision_maker(complex float);
+#include <complex.h>
+
+#define SQRT2 1.41421356237309504880
+
+void createQPSKConstellation(void);
+complex float *getQPSKConstellation(void);
+complex float getQPSKQuadrant(unsigned int);
+unsigned int qpskToDiBit(complex float);
+
