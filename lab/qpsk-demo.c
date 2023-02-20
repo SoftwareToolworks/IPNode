@@ -22,6 +22,7 @@
 #include "qpsk-demo.h"
 #include "costas_loop.h"
 #include "rrc_fir.h"
+#include "deque.h"
 #include "constellation.h"
 #include "timing_error_detector.h"
 
@@ -29,6 +30,8 @@
 
 extern float coeffs[]; // RRC LPF FIR coefficients
 extern complex float d_constellation[];
+extern deque *d_input;
+extern deque *d_decision;
 
 // Prototypes
 
@@ -101,40 +104,21 @@ static void processSymbols(complex float csamples[], unsigned int *diBits)
      */
     rrc_fir(rx_filter, recvBlock, RATE);
 
-    float error = FLT_MAX;
-    int index = 0;
-
     /*
-     * Receive the 8x samples into the queue
-     * one sample at a time
+     * Decimate by 4 for TED calculation (two samples per symbol)
      */
-    for (int i = 0; i < RATE; i++)
+    for (int i = 0; i < RATE; i += 4)
     {
         ted_input(&recvBlock[i]);
-
-        /*
-         * error will be updated at right time
-         * else repeat
-         */
-
-        float val = get_error();
-                                            // I have no clue, this is just a punt
-        if (val < error)
-        {
-            error = val;
-            index = i;
-        }
-        else
-        {
-            revert(true); // val is a larger value, so move back a sample
-        }
     }
+
+    complex float decision = *((complex float *)get(d_input, 1)); // use middle sample
 
     /*
      * By picking the best sample out of 8 we
      * are also decimating by 8
      */
-    complex float costasSymbol = recvBlock[index] * cmplxconj(get_phase());
+    complex float costasSymbol = decision * cmplxconj(get_phase());
 
     /*
      * The constellation gets rotated +45 degrees (rectangular)

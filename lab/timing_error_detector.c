@@ -26,8 +26,8 @@ static int d_inputs_per_symbol;
 static int d_input_clock;
 static int d_error_depth;
 
-static deque *d_input;
-static deque *d_decision;
+deque *d_input;
+deque *d_decision;
 
 // Prototypes
 
@@ -71,8 +71,8 @@ static void advance_input_clock()
  */
 void sync_reset()
 {
-    complex float data[1] = { CMPLXF(FLT_MAX, FLT_MAX) }; // I get infinity sometimes with 0.0 init
-    complex float decision[1] = { CMPLXF(FLT_MAX, FLT_MAX) };
+    complex float data[1] = { CMPLXF(0.0f, 0.0f) };
+    complex float decision[1] = { CMPLXF(0.0f, 0.0f) };
 
     d_error = 0.0f;
     d_prev_error = 0.0f;
@@ -80,35 +80,35 @@ void sync_reset()
     empty_deque(d_input);
     push_front(d_input, data);
     push_front(d_input, data);
-    push_front(d_input, data);  // push 3 values (left, middle, right)
+    push_front(d_input, data);  // push 3 values (previous, current, middle)
 
     empty_deque(d_decision);
     push_front(d_decision, decision);
     push_front(d_decision, decision);
-    push_front(d_decision, decision);  // push 3 values (left, middle, right)
+    push_front(d_decision, decision);  // push 3 values (previous, current, middle)
 
     sync_reset_input_clock();
 }
 
 void create_timing_error_detector()
 {
-    complex float data[1] = { CMPLXF(FLT_MAX, FLT_MAX) }; // I get infinity sometimes with 0.0 init
-    complex float decision[1] = { CMPLXF(FLT_MAX, FLT_MAX) };
+    complex float data[1] = { CMPLXF(0.0f, 0.0f) };
+    complex float decision[1] = { CMPLXF(0.0f, 0.0f) };
 
     d_error = 0.0f;
     d_prev_error = 0.0f;
     d_inputs_per_symbol = 2; // The input samples per symbol required
-    d_error_depth = 3;       // The number of input samples required to compute the error
+    d_error_depth = 3;       // The number of input samples required to compute the error (not used)
 
     d_input = create_deque(); // create deque
     push_front(d_input, data);
     push_front(d_input, data);
-    push_front(d_input, data);  // push 3 values (left, middle, right)
+    push_front(d_input, data);  // push 3 values (previous, current, middle)
     
     d_decision = create_deque();  // create deque
     push_front(d_decision, decision);
     push_front(d_decision, decision);
-    push_front(d_decision, decision);  // push 3 values (left, middle, right)
+    push_front(d_decision, decision);  // push 3 values (previous, current, middle)
 
     sync_reset_input_clock();
 }
@@ -171,14 +171,45 @@ void revert(bool preserve_error)
     pop_front(d_input);  // throw away
 }
 
+/*
+ * Constrains timing error to +/- the maximum value and corrects any
+ * floating point invalid numbers
+ */
+static float enormalize(float error, float maximum)
+{
+    if (isnan(error) || isinf(error))
+    {
+        return 0.0f;
+    }
+
+    // clip - Constrains value to the range of ( -maximum <> maximum )
+
+    if (error > maximum)
+    {
+        return maximum;
+    }
+    else if (error < -maximum)
+    {
+        return -maximum;
+    }
+
+    return error;
+}
+
+/*
+ * The error value indicates if the symbol was sampled early (-)
+ * or late (+) relative to the reference symbol
+ */
 static float compute_error()
 {
-    complex float left =   *((complex float *)get(d_input, 0));
+    complex float current =   *((complex float *)get(d_input, 0));
     complex float middle = *((complex float *)get(d_input, 1));
-    complex float right =  *((complex float *)get(d_input, 2));
+    complex float previous =  *((complex float *)get(d_input, 2));
 
-    return ((crealf(right) - crealf(left)) * crealf(middle)) +
-           ((cimagf(right) - cimagf(left)) * cimagf(middle));
+    float errorInphase = (crealf(previous) - crealf(current)) * crealf(middle);
+    float errorQuadrature = (cimagf(previous) - cimagf(current)) * cimagf(middle);
+
+    return enormalize(errorInphase + errorQuadrature, 0.3f);
 }
 
 /*
