@@ -122,11 +122,3 @@ Simple Service Discovery Protocol
 (f)(4) Only a data emission using a ```specified``` digital code may be transmitted. The symbol rate must not exceed ***1200 bauds***, or for ```frequency-shift keying```, the frequency shift between mark and space must not exceed 1 kHz. (not applicable for PSK)   
 ##### § 97.309 RTTY and data emission codes.
 (b) A station may also transmit a data emission using an ***unspecified*** digital code, except to a station in a country with which the United States does not have an agreement permitting the code to be used.   
-
-#### GNU Radio Experiments
-I threw together the receiver design I have so far:   
-<img src="lab/gnu-radio-flow1.png" width="400" />
-
-What I need though, is a synchronizer, i.e. a Gardner Timing Detection Algorithm to keep both the transmit and receive clocks in sync. Here's the GNU Radio diagram for that:   
-<img src="lab/gnuradio-design.png" width="400" />
-
