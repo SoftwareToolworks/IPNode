@@ -31,7 +31,7 @@ What the audio looks and sounds like. This shows a series of pings, with no stat
 
 <img src="docs/time-domain.png" alt="time-domain"/>   
 
-[Link to a recorded audio WAV file](lab/ipdata.wav)  
+[Link to a recorded audio WAV file](docs/ipdata.wav)  
 
 This has an exagerated ```txdelay``` and ```txtail``` which is the 1 kHz beeps you hear.
 
