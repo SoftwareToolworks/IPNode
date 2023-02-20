@@ -31,7 +31,6 @@
 extern float coeffs[]; // RRC LPF FIR coefficients
 extern complex float d_constellation[];
 extern deque *d_input;
-extern deque *d_decision;
 
 // Prototypes
 

@@ -27,7 +27,6 @@ static int d_input_clock;
 static int d_error_depth;
 
 deque *d_input;
-deque *d_decision;
 
 // Prototypes
 
@@ -72,7 +71,6 @@ static void advance_input_clock()
 void sync_reset()
 {
     complex float data[1] = { CMPLXF(0.0f, 0.0f) };
-    complex float decision[1] = { CMPLXF(0.0f, 0.0f) };
 
     d_error = 0.0f;
     d_prev_error = 0.0f;
@@ -82,18 +80,12 @@ void sync_reset()
     push_front(d_input, data);
     push_front(d_input, data);  // push 3 values (previous, current, middle)
 
-    empty_deque(d_decision);
-    push_front(d_decision, decision);
-    push_front(d_decision, decision);
-    push_front(d_decision, decision);  // push 3 values (previous, current, middle)
-
     sync_reset_input_clock();
 }
 
 void create_timing_error_detector()
 {
     complex float data[1] = { CMPLXF(0.0f, 0.0f) };
-    complex float decision[1] = { CMPLXF(0.0f, 0.0f) };
 
     d_error = 0.0f;
     d_prev_error = 0.0f;
@@ -104,19 +96,13 @@ void create_timing_error_detector()
     push_front(d_input, data);
     push_front(d_input, data);
     push_front(d_input, data);  // push 3 values (previous, current, middle)
-    
-    d_decision = create_deque();  // create deque
-    push_front(d_decision, decision);
-    push_front(d_decision, decision);
-    push_front(d_decision, decision);  // push 3 values (previous, current, middle)
 
     sync_reset_input_clock();
 }
 
 void destroy_timing_error_detector()
 {
-    // destroy the deque's
-    free(d_decision);
+    // destroy the deque
     free(d_input);
 }
 
@@ -133,15 +119,8 @@ static void slice(complex float *z, complex float *x)
  */
 void ted_input(complex float *x)
 {
-    complex float z[1];
-
     push_front(d_input, x);
     pop_back(d_input); // throw away
-
-    slice(z, get(d_input, 0));
-
-    push_front(d_decision, z);
-    pop_back(d_decision); // throw away
 
     advance_input_clock();
 
@@ -163,9 +142,6 @@ void revert(bool preserve_error)
         d_error = d_prev_error;
 
     revert_input_clock();
-
-    push_back(d_decision, back(d_decision));
-    pop_front(d_decision);  // throw away
 
     push_back(d_input, back(d_input));
     pop_front(d_input);  // throw away
