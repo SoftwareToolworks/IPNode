@@ -14,6 +14,6 @@
 
 void createQPSKConstellation(void);
 complex float *getQPSKConstellation(void);
-complex float getQPSKQuadrant(unsigned int);
-unsigned int qpskToDiBit(complex float);
+complex float getQPSKQuadrant(unsigned char);
+unsigned char qpskToDiBit(complex float);
 

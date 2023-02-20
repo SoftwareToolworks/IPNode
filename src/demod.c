@@ -152,7 +152,7 @@ int demod_get_audio_level(struct demodulator_state_s *D)
  */
 void processSymbols(complex float csamples[])
 {
-    unsigned int diBits;
+    unsigned char diBits;
 
     struct demodulator_state_s *D = &demodulator_state;
 

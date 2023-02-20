@@ -27,12 +27,12 @@ complex float *getQPSKConstellation()
     return d_qpsk;
 }
 
-complex float getQPSKQuadrant(unsigned int diBit)
+complex float getQPSKQuadrant(unsigned char diBit)
 {
     return d_qpsk[diBit];
 }
 
-unsigned int qpskToDiBit(complex float sample)
+unsigned char qpskToDiBit(complex float sample)
 {
     // Real component determines small bit.
     // Imag component determines big bit.
