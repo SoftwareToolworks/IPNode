@@ -24,7 +24,6 @@ static float d_prev_error;
 
 static int d_inputs_per_symbol;
 static int d_input_clock;
-static int d_error_depth;
 
 deque *d_input;
 
@@ -89,7 +88,6 @@ void create_timing_error_detector()
     d_error = 0.0f;
     d_prev_error = 0.0f;
     d_inputs_per_symbol = 2; // The input samples per symbol required
-    d_error_depth = 3;       // The number of input samples required to compute the error (not used)
 
     d_input = create_deque(); // create deque
     push_front(d_input, data);

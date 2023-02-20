@@ -238,8 +238,8 @@ int main(int argc, char **argv)
 
     m_txPhase = cmplx(0.0f);
 #ifdef FREQ_ERROR
-    m_txRect = cmplx(TAU * (m_center + 50.0f) / FS);
-    m_offset_freq = (m_center + 50.0f);
+    m_txRect = cmplx(TAU * (m_center + 58.0f) / FS);
+    m_offset_freq = (m_center + 58.0f);
 #else
     m_txRect = cmplx(TAU * m_center / FS);
     m_offset_freq = m_center;
