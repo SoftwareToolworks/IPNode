@@ -30,7 +30,6 @@ deque *d_input;
 
 // Prototypes
 
-static void slice(complex float *, complex float *);
 static float compute_error(void);
 static void advance_input_clock(void);
 
@@ -104,12 +103,6 @@ void destroy_timing_error_detector()
 {
     // destroy the deque
     free(d_input);
-}
-
-static void slice(complex float *z, complex float *x)
-{
-    unsigned int index = qpsk_decision_maker(*x);
-    map_to_points(index, z);
 }
 
 /*
