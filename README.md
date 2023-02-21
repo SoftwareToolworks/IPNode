@@ -1,25 +1,25 @@
 #### A 10 Meter 1200 Baud PSK IP Node
-Based on the Dire Wolf repository, it removes all the APRS, Repeaters, Beacons, FSK, and AFSK. The intent is to create a Linux based microcontroller with GPIO Push-To-Talk (PTT) Packet Radio Node transmitting QPSK. Currently set for 1200 Baud/2400 bit/s at 9600 sampling rate. It uses a Root-Raised-Cosine (RRC) matched filter on transmit and receive, and a slightly modified ```Improved Level 2 Protocol``` (IL2P).
+Based on the Dire Wolf repository, it removes all the APRS, Repeaters, Beacons, FSK, and AFSK. The intent is to create a Linux based microcontroller with GPIO Push-To-Talk (PTT) Packet Radio Node transmitting QPSK. Currently set for 1200 Baud/2400 bit/s at 9600 sampling rate. It uses a Root-Raised-Cosine (RRC) matched filter on transmit and receive, and a slightly modified ```Improved Level 2 Protocol``` (IL2P).   
 
-Designed for Internet Protocol (IP) use on 10 meters, which has a regulatory limit of 1200 Baud, and must operate in the **28.120 - 28.189 MHz** band if automatically controlled. In theory you could input your PSK into an FM modulator, but you would have to limit the modulation Index to less than 1 radian on 10 Meters (deviation equal to the highest modulating frequency), or about 1.6 kHz deviation on HF. VHF and UHF don't have modulation index limits, and have higher symbol rate and bandwidth allowances. Which is why most Amateurs use FSK on HF.
+Designed for Internet Protocol (IP) use on 10 meters, which has a regulatory limit of 1200 Baud, and must operate in the **28.120 - 28.189 MHz** band if automatically controlled.   
 
-The center frequency of ```1000 Hz``` was chosen to keep the signal in the audio bandpass of most radios. You could move this higher to about ```1600 Hz```, but this is the limit for most radios.
+The center frequency of ```1000 Hz``` was chosen to keep the signal in the audio bandpass of most radios. You could move this higher to about ```1600 Hz```, but this is the limit for most radios.   
 
-The use of digipeaters in the AX.25 protocol was a terrible design, and have been removed from this software. The functionality of a repeater should use full-duplex (or cross-band) techniques, so there are no hidden stations.
+The use of digipeaters have been removed, so the functionality of a repeater can be replaced using full-duplex (or cross-band) techniques. This prevents hidden nodes.   
 
-The Improved Level 2 Protocol (IL2P) was built upon AX.25 Version 2.0, thus a lot of the Version 2.2 functionality is not used in this protocol. The protocol was modified to be hard-wired using only the maximum FEC and Header Type 1, as it is the most useful. It is designed here to transport Level 3 Internet Protocol (IP). There is some Broadcast functionality left, used for ARP, Node Identification, and multicast UDP. The KISS commands from the kernel are limited to sending data, and other command types are not processed.
+The Improved Level 2 Protocol (IL2P) was built upon AX.25 Version 2.0, thus a lot of the Version 2.2 functionality is not used in this protocol. The protocol was also modified to be hard-wired using only the maximum FEC and Header Type 1, as it is the most useful. It is used to transport Level 3 Internet Protocol (IP). There is some Broadcast functionality left, used for ARP, Node Identification, and multicast UDP. The KISS commands from the kernel are limited to sending data, and other command types are not processed.   
 
-The modem uses the ALSA Linux Soundcard 16-bit stereo channel PCM, at a fixed 9.6 kHz sample rate. The network interface uses a Linux pseudo-terminal running the KISS protocol. This interfaces to the AX.25 Level 3 networking using the ```kissattach``` program, making the modem routable over IP.
+The modem uses the ALSA Linux Soundcard 16-bit stereo channel PCM, at a fixed 9.6 kHz sample rate. The network interface uses a Linux pseudo-terminal running the KISS protocol. This interfaces to the AX.25 Level 3 networking using the ```kissattach``` program, making the modem routable over IP.   
 #### Status
 Ubuntu desktop is used for development. The PTT code is currently commented out to prevent core dumps, as the desktop doesn't have the GPIO, but the idea is to run this on a Linux microcontroller when fully developed.   
 
-The GPIO will have PTT, DCD, Connect, and Sync as interface lines.
+The GPIO will have PTT, DCD, Connect, and Sync as interface lines.   
 
-The demod.c file is under development. The Timing Estimation (TED) is taken from GNU Radio from their Gardner example. The scatter diagram looks OK.
+The demod.c file is under development. The Timing Estimation (TED) is taken from GNU Radio from their Gardner example. The scatter diagram looks OK.   
 
-The Data Carrier Detect (DCD) and End Of Frame (EOF) logic needs development.
+The Data Carrier Detect (DCD) and End Of Frame (EOF) logic needs development.   
 #### Notes
-The IL2P description says the idle symbols are supposed to be alternating ```0101``` binary during ```txdelay``` and ```txtail``` but this doesn't work for PSK, so we send '00' and '11' for QPSK. This results in a BPSK signal 1000 Hz center frequency.
+The IL2P description says the idle symbols are supposed to be alternating ```0101``` binary during ```txdelay``` and ```txtail``` but this doesn't work for PSK, so we send '00' and '11' as BPSK.   
 
 ```
 +----------------------+-------------+---------------------+
@@ -27,7 +27,7 @@ The IL2P description says the idle symbols are supposed to be alternating ```010
 +----------------------+-------------+---------------------+
    ramp-up transmitter     payload    ramp-down transmitter
 ```
-What the audio looks and sounds like. This shows a series of pings, with no station answering, and the beginning is extranoues output from the chrome browser over UDP:   
+The following shows a series of pings, with no station answering, and the beginning is extranoues output from the chrome browser over UDP:   
 
 <img src="docs/time-domain.png" alt="time-domain"/>   
 
@@ -39,7 +39,7 @@ What the spectrum looks like:
 
 <img src="docs/actual-packet-data-spectrum.png" alt="actual spectrum" width="400"/>   
 
-This looks like about 1 kHz +/- 800 Hz or 1600 Hz bandwidth, so the **emission** symbol would be **1K60J2D**.
+This is 1 kHz +/- 800 Hz or 1600 Hz bandwidth, so the **emission** symbol would be **1K60J2D**.
 #### Startup
 The ```ipnode``` program runs in a loop with three threads (tx, rx, and kiss). It will read the config file ```ipnode.conf``` if available, and begin running.
 ```
