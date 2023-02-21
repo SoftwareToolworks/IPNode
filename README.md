@@ -69,12 +69,12 @@ Audio device for both receive and transmit: default
 Created symlink /tmp/kisstnc -> /dev/pts/2
 Virtual KISS TNC is available on /dev/pts/2
 
-$ sudo kissattach $(ls -l /tmp/kisstnc | awk '{print $NF}') ip192 44.190.100.1
+$ sudo kissattach $(ls -l /tmp/kisstnc | awk '{print $NF}') ip192 172.30.10.1
 ```
 You should see a new interface called ```ax0``` which should look something like this:
 ```
 ax0: flags=67<UP,BROADCAST,RUNNING>  mtu 255
-        inet 44.190.100.1  netmask 255.0.0.0  broadcast 44.255.255.255
+        inet 172.30.10.1  netmask 255.0.0.0  broadcast 172.30.10.255
         ax25 W1AW-10  txqueuelen 10  (AMPR AX.25)
         RX packets 0  bytes 0 (0.0 B)
         RX errors 0  dropped 0  overruns 0  frame 0
@@ -87,7 +87,7 @@ $ route -4
 Kernel IP routing table
 Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 default         router          0.0.0.0         UG    600    0        0 wlp0s20f3
-44.0.0.0        0.0.0.0         255.0.0.0       U     0      0        0 ax0
+172.30.10.0     0.0.0.0         255.255.255.0   U     0      0        0 ax0
 link-local      0.0.0.0         255.255.0.0     U     1000   0        0 wlp0s20f3
 192.168.1.0     0.0.0.0         255.255.255.0   U     600    0        0 wlp0s20f3
 ```
@@ -106,7 +106,7 @@ AX.25, Src: W1AW-10, Dst: QST, Ver: V?.?
     Source: W1AW-10
     Control field: U, func=UI (0x03)
     Protocol ID: IP (0xcc)
-Internet Protocol Version 4, Src: 44.190.100.1, Dst: 239.255.255.250
+Internet Protocol Version 4, Src: 172.30.10.1, Dst: 239.255.255.250
 User Datagram Protocol, Src Port: 34392, Dst Port: 1900
 Simple Service Discovery Protocol
 ```
