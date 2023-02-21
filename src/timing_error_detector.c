@@ -30,6 +30,7 @@ static deque *d_input;
 
 static float compute_error(void);
 static void advance_input_clock(void);
+static float enormalize(float, float);
 
 // Functions
 
