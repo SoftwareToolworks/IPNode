@@ -75,7 +75,7 @@ void sync_reset()
     empty_deque(d_input);
     push_front(d_input, data);
     push_front(d_input, data);
-    push_front(d_input, data);
+    push_front(d_input, data);  // push 3 values (previous, current, middle)
 
     sync_reset_input_clock();
 }
@@ -91,7 +91,7 @@ void create_timing_error_detector()
     d_input = create_deque();
     push_front(d_input, data);
     push_front(d_input, data);
-    push_front(d_input, data);
+    push_front(d_input, data);  // push 3 values (previous, current, middle)
     
     sync_reset_input_clock();
 }
@@ -136,14 +136,45 @@ void revert(bool preserve_error)
     pop_front(d_input);  // throw away
 }
 
+/*
+ * Constrains timing error to +/- the maximum value and corrects any
+ * floating point invalid numbers
+ */
+static float enormalize(float error, float maximum)
+{
+    if (isnan(error) || isinf(error))
+    {
+        return 0.0f;
+    }
+
+    // clip - Constrains value to the range of ( -maximum <> maximum )
+
+    if (error > maximum)
+    {
+        return maximum;
+    }
+    else if (error < -maximum)
+    {
+        return -maximum;
+    }
+
+    return error;
+}
+
+/*
+ * The error value indicates if the symbol was sampled early (-)
+ * or late (+) relative to the reference symbol
+ */
 static float compute_error()
 {
-    complex float left =   *((complex float *)get(d_input, 0));
-    complex float middle = *((complex float *)get(d_input, 1));
-    complex float right =  *((complex float *)get(d_input, 2));
+    complex float current =   *((complex float *)get(d_input, 0));
+    complex float middle =    *((complex float *)get(d_input, 1));
+    complex float previous =  *((complex float *)get(d_input, 2));
 
-    return ((crealf(right) - crealf(left)) * crealf(middle)) +
-           ((cimagf(right) - cimagf(left)) * cimagf(middle));
+    float errorInphase = (crealf(previous) - crealf(current)) * crealf(middle);
+    float errorQuadrature = (cimagf(previous) - cimagf(current)) * cimagf(middle);
+
+    return enormalize(errorInphase + errorQuadrature, 0.3f);
 }
 
 complex float getMiddleSample()
