@@ -1,5 +1,5 @@
 #### A 10 Meter 1200 Baud QPSK IP Node
-Based on the Dire Wolf repository, it removes all the APRS, Repeaters, Beacons, FSK, and AFSK. The intent is to create a Linux based microcontroller with GPIO Push-To-Talk (PTT) Packet Radio Node transmitting QPSK. Currently set for 1200 Baud/2400 bit/s at 9600 sampling rate. It uses a Root-Raised-Cosine (RRC) matched filter on transmit and receive, and a slightly modified ```Improved Level 2 Protocol``` (IL2P).   
+Based on the Dire Wolf repository, it removes all the APRS, Repeaters, Beacons, FSK, and AFSK. The intent is to create a Linux based microcontroller with GPIO Push-To-Talk (PTT) Packet Radio Node transmitting QPSK. Currently set for 1200 Baud/2400 bit/s at 9600 sampling rate. It uses a Root-Raised-Cosine (RRC) matched filter on transmit and receive, and a slightly modified ```Improved Level 2 Protocol``` (IL2P). The Garner Timing Error Detection (TED) is taken from GNU Radio.   
 
 Designed for Internet Protocol (IP) use on 10 meters, which has a regulatory limit of 1200 Baud, and must operate in the **28.120 - 28.189 MHz** band if automatically controlled.   
 
@@ -13,9 +13,7 @@ The modem uses the ALSA Linux Soundcard 16-bit stereo channel PCM, at a fixed 9.
 #### Status
 Ubuntu desktop is used for development. The PTT code is currently commented out to prevent core dumps, as the desktop doesn't have the GPIO, but the idea is to run this on a Linux microcontroller when fully developed.   
 
-The GPIO will have PTT, DCD, Connect, and Sync as interface lines.   
-
-The demod.c file is under development. The Timing Estimation (TED) is taken from GNU Radio from their Gardner example. The scatter diagram looks OK.   
+The GPIO will need PTT, DCD, Connect, and Sync as interface lines.   
 
 The Data Carrier Detect (DCD) and End Of Frame (EOF) logic needs development.   
 #### Notes
