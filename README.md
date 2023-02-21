@@ -59,7 +59,7 @@ Create the ```/etc/ax25/axports``` file:
 # The format of this file is:
 # name callsign speed paclen window description
 #
-ip192 W1AW-10 0	256 7	ip192 port (1200 Baud QPSK)
+ip172 W1AW-10 0	256 7	ip172 port (1200 Baud QPSK)
 ```
 
 Execute like:
@@ -69,7 +69,7 @@ Audio device for both receive and transmit: default
 Created symlink /tmp/kisstnc -> /dev/pts/2
 Virtual KISS TNC is available on /dev/pts/2
 
-$ sudo kissattach $(ls -l /tmp/kisstnc | awk '{print $NF}') ip192 172.30.10.1
+$ sudo kissattach $(ls -l /tmp/kisstnc | awk '{print $NF}') ip172 172.30.10.1
 ```
 You should see a new interface called ```ax0``` which should look something like this:
 ```
