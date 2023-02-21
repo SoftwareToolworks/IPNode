@@ -199,3 +199,4 @@ int get_inputs_per_symbol()
 {
     return d_inputs_per_symbol;
 }
+

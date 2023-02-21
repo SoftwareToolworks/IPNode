@@ -7,6 +7,7 @@
  */
 
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "deque.h"
 
@@ -17,12 +18,12 @@ typedef struct dnode
     void *data;
 } node;
 
-/** create_node
+/*
+ * create_node
  *
- * Helper function that creates a node by allocating memory for it on the heap.
- * Be sure to set its pointers to NULL.
+ * Helper function that creates a node by allocating memory for it on the heap
  *
- * @param data a void pointer to data the user wants to store in the deque
+ * @param data a void pointer to data in the deque
  * @return a node
  */
 static node *create_node(void *data)
@@ -42,10 +43,10 @@ static node *create_node(void *data)
     return newNode;
 }
 
-/** create_deque
+/*
+ * create_deque
  *
- * Creates a deque by allocating memory for it on the heap.
- * Be sure to initialize size to zero and head/tail to NULL.
+ * Creates a deque by allocating memory for it on the heap
  *
  * @return an empty deque
  */
@@ -61,29 +62,29 @@ deque *create_deque(void)
     
     d->head = NULL;
     d->tail = NULL;
-    d->size = 0;
+    d->size = 0U;
     
     return d;
 }
 
-/** push_front
+/*
+ * push_front
  *
  * Adds the data to the front of the deque.
  *
  * @param d a pointer to the deque structure.
- * @param data pointer to data the user wants to store in the deque.
+ * @param data pointer to data to store in the deque.
  */
 void push_front(deque *d, void *data)
 {
-    /// @todo Implement
     if (d == NULL)
     {
         return;
     }
 
-    node *newNode = create_node(data);
+    node *newNode = (node *)create_node(data);
 
-    if (d->size == 0)
+    if (d->size == 0U)
     {
         d->head = newNode;
         d->tail = newNode;
@@ -98,24 +99,24 @@ void push_front(deque *d, void *data)
     d->size++;
 }
 
-/** push_back
+/*
+ * push_back
  *
  * Adds the data to the back of the deque.
  *
  * @param d a pointer to the deque structure.
- * @param data pointer to data the user wants to store in the deque.
+ * @param data pointer to data to store in the deque.
  */
 void push_back(deque *d, void *data)
 {
-    /// @todo Implement
     if (d == NULL)
     {
         return;
     }
 
-    node *newNode = create_node(data);
+    node *newNode = (node *)create_node(data);
 
-    if (d->size == 0)
+    if (d->size == 0U)
     {
         d->head = newNode;
         d->tail = newNode;
@@ -130,7 +131,8 @@ void push_back(deque *d, void *data)
     d->size++;
 }
 
-/** front
+/*
+ * front
  *
  * Gets the data at the front of the deque
  * If the deque is empty return NULL.
@@ -140,7 +142,7 @@ void push_back(deque *d, void *data)
  */
 void *front(deque *d)
 {
-    if (d == NULL || d->size == 0)
+    if (d == NULL || d->size == 0U)
     {
         return NULL;
     }
@@ -150,9 +152,10 @@ void *front(deque *d)
     }
 }
 
-/** back
+/*
+ * back
  *
- * Gets the data at the "end" of the deque
+ * Gets the data at the back of the deque
  * If the deque is empty return NULL.
  *
  * @param d a pointer to the deque structure
@@ -160,7 +163,7 @@ void *front(deque *d)
  */
 void *back(deque *d)
 {
-    if (d == NULL || d->size == 0)
+    if (d == NULL || d->size == 0U)
     {
         return NULL;
     }
@@ -170,25 +173,26 @@ void *back(deque *d)
     }
 }
 
-/** get
+/*
+ * get
  *
  * Gets the data at the specified index in the deque
  *
  * @param d a pointer to the deque structure
  * @param index 0-based, starting from the head.
- * @return The data from the specified index in the deque or NULL if index is
- *         out of range of the deque.
+ * @return The data from the specified index in the deque or
+ *         NULL if index is out of range of the deque.
  */
-void *get(deque *d, int index)
+void *get(deque *d, unsigned int index)
 {
-    if (d == NULL || index < 0 || index >= d->size)
+    if (d == NULL || index >= d->size)
     {
         return NULL;
     }
 
     node *getNode = d->head;
     
-    for (int i = 0; i < index; i++)
+    for (unsigned int i = 0U; i < index; i++)
     {
         getNode = getNode->next;
     }
@@ -196,7 +200,8 @@ void *get(deque *d, int index)
     return getNode->data;
 }
 
-/** pop_front
+/*
+ * pop_front
  *
  * Removes the node at the front of the deque, and returns its data to the user
  *
@@ -205,7 +210,7 @@ void *get(deque *d, int index)
  */
 void *pop_front(deque *d)
 {
-    if (d == NULL || d->size == 0)
+    if (d == NULL || d->size == 0U)
     {
         return NULL;
     }
@@ -214,7 +219,7 @@ void *pop_front(deque *d)
     void *returnData = returnNode->data;
     d->head = d->head->next;
 
-    if (d->size > 1)
+    if (d->size > 1U)
         d->head->prev = NULL;
 
     free(returnNode);
@@ -223,16 +228,17 @@ void *pop_front(deque *d)
     return returnData;
 }
 
-/** pop_back
+/*
+ * pop_back
  *
- * Removes the node at the end of the deque, and returns its data to the user
+ * Removes the node at the end of the deque and returns its data
  *
  * @param d a pointer to the deque.
  * @return The data in the first node, or NULL if the deque is NULL or empty
  */
 void *pop_back(deque *d)
 {
-    if (d == NULL || d->size == 0)
+    if (d == NULL || d->size == 0U)
     {
         return NULL;
     }
@@ -241,7 +247,7 @@ void *pop_back(deque *d)
     void *returnData = returnNode->data;
     d->tail = d->tail->prev;
 
-    if (d->size > 1)
+    if (d->size > 1U)
         d->tail->next = NULL;
 
     free(returnNode);
@@ -250,48 +256,51 @@ void *pop_back(deque *d)
     return returnData;
 }
 
-/** size
+/*
+ * size
  *
  * Gets the size of the deque
  *
  * @param d a pointer to the deque structure
  * @return The size of the deque
  */
-int size(deque *d)
+unsigned int size(deque *d)
 {
     if (d == NULL)
     {
-        return 0;
+        return 0U;
     }
 
     return d->size;
 }
 
-/** is_empty
+/*
+ * is_empty
  *
  * Checks to see if the deque is empty.
  *
  * @param d a pointer to the deque structure
- * @return 1 if the deque is indeed empty, or 0 otherwise.
+ * @return true if the deque is empty, or false otherwise.
  */
-int is_empty(deque *d)
+bool is_empty(deque *d)
 {
     if (d == NULL)
     {
-        return 0;
+        return false;
     }
 
-    if (d->size == 0 || d->head == NULL)
+    if (d->size == 0U || d->head == NULL)
     {
-        return 1;
+        return true;
     }
 
-    return 0;
+    return false;
 }
 
-/** empty_deque
+/*
+ * empty_deque
  *
- * Empties the deque. After this is called, the deque should be empty.
+ * Empties the deque. After this call, the deque should be empty.
  * This does not free the deque struct itself, just all nodes and data within.
  *
  * @param d a pointer to the deque structure
@@ -303,8 +312,9 @@ void empty_deque(deque *d)
         return;
     }
 
-    while (d->size != 0)
+    while (d->size != 0U)
     {
         free(pop_front(d));
     }
 }
+

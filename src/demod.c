@@ -43,7 +43,7 @@ static struct demodulator_state_s demodulator_state;
 static complex float rx_filter[NTAPS];
 static complex float m_rxPhase;
 static complex float m_rxRect;
-static complex float recvBlock[8]; // CYCLES
+static complex float recvBlock[8]; // 8 CYCLES per symbol
 
 float m_offset_freq;
 
@@ -85,7 +85,7 @@ void demod_init(struct audio_s *pa)
     save_audio_config_p = pa;
     dcdDetect = 0;
 
-    m_rxRect = cmplx((TAU * CENTER) / FS);
+    m_rxRect = cmplxconj((TAU * CENTER) / FS);
     m_rxPhase = cmplx(0.0f);
 
     struct demodulator_state_s *D = &demodulator_state;
@@ -183,7 +183,7 @@ void processSymbols(complex float csamples[])
         ted_input(&recvBlock[i]);
     }
 
-    complex float decision = getMiddleSample(); // use middle sample
+    complex float decision = getMiddleSample(); // use middle TED sample
 
     float fsam = cnormf(decision);
 
@@ -238,7 +238,7 @@ void processSymbols(complex float csamples[])
     m_offset_freq = (get_frequency() * RS / TAU); // convert radians to freq at symbol rate
 
     /*
-     * Declare EOF when +/- 58 Hz error
+     * Declare EOF when greater than +/- 58 Hz error
      */
     if ((m_offset_freq > (CENTER + 58.0f)) || (m_offset_freq < (CENTER - 58.0f)))
     {
@@ -252,3 +252,4 @@ void processSymbols(complex float csamples[])
     il2p_rec_bit((diBits >> 1) & 0x1);
     il2p_rec_bit(diBits & 0x1);
 }
+

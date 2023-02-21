@@ -7,30 +7,33 @@
  */
 #pragma once
 
+#include <stdbool.h>
+
 struct dnode;
 
 typedef struct
 {
-  struct dnode *head;
-  struct dnode *tail;
-  int size;
+    struct dnode *head;
+    struct dnode *tail;
+    unsigned int size;
 } deque;
 
 /* Creating */
 deque *create_deque(void);
 
 /* Adding */
-void push_front(deque *d, void *data);
-void push_back(deque *d, void *data);
+void push_front(deque *, void *);
+void push_back(deque *, void *);
 
 /* Querying Deque */
-void *front(deque *d);
-void *back(deque *d);
-void *get(deque *d, int index);
-int is_empty(deque *d);
-int size(deque *d);
+void *front(deque *);
+void *back(deque *);
+void *get(deque *, unsigned int);
+bool is_empty(deque *);
+unsigned int size(deque *);
 
 /* Removing */
-void *pop_front(deque *d);
-void *pop_back(deque *d);
-void empty_deque(deque *d);
+void *pop_front(deque *);
+void *pop_back(deque *);
+void empty_deque(deque *);
+
