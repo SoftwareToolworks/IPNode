@@ -70,25 +70,27 @@ Created symlink /tmp/kisstnc -> /dev/pts/2
 Virtual KISS TNC is available on /dev/pts/2
 
 $ sudo kissattach $(ls -l /tmp/kisstnc | awk '{print $NF}') ip172
-$ sudo route add -net 172.30.10.0 netmask 255.255.255.0 metric 100 ax0
+$ sudo ip addr add 172.30.10.1/24 dev ax0
 ```
 You should see a new interface called ```ax0``` which should look something like this:
 ```
+$ ifconfig ax0
 ax0: flags=67<UP,BROADCAST,RUNNING>  mtu 255
+        inet 172.30.10.1  netmask 255.255.255.0  broadcast 0.0.0.0
         ax25 W1AW-10  txqueuelen 10  (AMPR AX.25)
         RX packets 0  bytes 0 (0.0 B)
         RX errors 0  dropped 0  overruns 0  frame 0
-        TX packets 9  bytes 454 (454.0 B)
+        TX packets 97  bytes 11112 (11.1 KB)
         TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 ```
 A routing table might look like this:
 ```
-$ route -4
+$ route -4n
 Kernel IP routing table
 Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
-default         router          0.0.0.0         UG    100    0        0 enp1s0
-link-local      0.0.0.0         255.255.0.0     U     1000   0        0 enp1s0
-172.30.10.0     0.0.0.0         255.255.255.0   U     100    0        0 ax0
+0.0.0.0         192.168.1.1     0.0.0.0         UG    100    0        0 enp1s0
+169.254.0.0     0.0.0.0         255.255.0.0     U     1000   0        0 enp1s0
+172.30.10.0     0.0.0.0         255.255.255.0   U     0      0        0 ax0
 192.168.1.0     0.0.0.0         255.255.255.0   U     100    0        0 enp1s0
 ```
 When you are done, or you want to restart, you can delete the kissattach using:
