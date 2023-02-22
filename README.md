@@ -1,5 +1,5 @@
 #### A 10 Meter 1200 Baud QPSK IP Node
-Based on the Dire Wolf repository, it removes all the APRS, Repeaters, Beacons, FSK, and AFSK. The intent is to create a Linux based microcontroller with GPIO Push-To-Talk (PTT) Packet Radio Node transmitting QPSK. Currently set for 1200 Baud/2400 bit/s at 9600 sampling rate. It uses a Root-Raised-Cosine (RRC) matched filter on transmit and receive, and a slightly modified ```Improved Level 2 Protocol``` (IL2P). The Garner Timing Error Detection (TED) and Costas Loop is translated from GNU Radio.   
+Based on the Dire Wolf repository, it removes all the APRS, Repeaters, Beacons, FSK, and AFSK. The intent is to create a Linux based microcontroller with GPIO Push-To-Talk (PTT) Packet Radio Node transmitting QPSK. Currently set for 1200 Baud/2400 bit/s at 9600 sampling rate. It uses a Root-Raised-Cosine (RRC) matched filter on transmit and receive, and a slightly modified Improved Level 2 Protocol (IL2P). The Garner Timing Error Detection (TED) and Costas Loop is translated from GNU Radio.   
 
 Designed for Internet Protocol (IP) use on 10 meters, which has a regulatory limit of 1200 Baud, and must operate in the **28.120 - 28.189 MHz** band if automatically controlled.   
 
@@ -7,7 +7,7 @@ The center frequency of ```1000 Hz``` was chosen to keep the signal in the audio
 
 The use of digipeaters have been removed, so the functionality of a repeater can be replaced using full-duplex (or cross-band) techniques. This prevents hidden nodes.   
 
-The Improved Level 2 Protocol (IL2P) was built upon AX.25 Version 2.0, thus a lot of the Version 2.2 functionality is not used in this protocol. The protocol was also modified to be hard-wired using only the maximum FEC and Header Type 1, as it is the most useful. It is used to transport Level 3 Internet Protocol (IP). There is some Broadcast functionality left, used for ARP, Node Identification, and multicast UDP. The KISS commands from the kernel are limited to sending data, and other command types are not processed.   
+IL2P was built upon AX.25 Version 2.0, thus a lot of the Version 2.2 functionality is not used in this protocol. The protocol was also modified to be hard-wired using only the maximum FEC and Header Type 1, as it is the most useful. It is used to transport Level 3 Internet Protocol (IP). There is some Broadcast functionality left, used for ARP, Node Identification, and multicast UDP. The KISS commands from the kernel are limited to sending data, and other command types are not processed.   
 
 The modem uses the ALSA Linux Soundcard 16-bit stereo channel PCM, at a fixed 9.6 kHz sample rate. The network interface uses a Linux pseudo-terminal running the KISS protocol. This interfaces to the AX.25 Level 3 networking using the ```kissattach``` program, making the modem routable over IP.   
 #### Status
