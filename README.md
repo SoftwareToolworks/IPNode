@@ -74,7 +74,7 @@ $ sudo kissattach $(ls -l /tmp/kisstnc | awk '{print $NF}') ip172 172.30.10.1
 You should see a new interface called ```ax0``` which should look something like this:
 ```
 ax0: flags=67<UP,BROADCAST,RUNNING>  mtu 255
-        inet 172.30.10.1  netmask 255.255.255.0  broadcast 172.30.10.255
+        inet 172.30.10.1  netmask 255.255.0.0  broadcast 172.30.10.255
         ax25 W1AW-10  txqueuelen 10  (AMPR AX.25)
         RX packets 0  bytes 0 (0.0 B)
         RX errors 0  dropped 0  overruns 0  frame 0
@@ -87,7 +87,7 @@ $ route -4
 Kernel IP routing table
 Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 default         router          0.0.0.0         UG    600    0        0 wlp0s20f3
-172.30.10.0     0.0.0.0         255.255.255.0   U     0      0        0 ax0
+172.30.0.0      0.0.0.0         255.255.0.0     U     0      0        0 ax0
 link-local      0.0.0.0         255.255.0.0     U     1000   0        0 wlp0s20f3
 192.168.1.0     0.0.0.0         255.255.255.0   U     600    0        0 wlp0s20f3
 ```
