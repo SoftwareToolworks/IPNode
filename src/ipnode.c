@@ -167,8 +167,8 @@ int main(int argc, char *argv[])
     ax25_link_init(&misc_config);
     il2p_init();
 
-    //tx_init(&audio_config);
-    //modulate_init(&audio_config);
+    tx_init(&audio_config);
+    modulate_init(&audio_config);
 
     rx_init(&audio_config);    // also inits demod and TED
 
