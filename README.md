@@ -16,8 +16,6 @@ Ubuntu desktop is used for development. The PTT code is currently commented out 
 The GPIO will need PTT, DCD, Connect, and Sync as interface lines.   
 
 The Data Carrier Detect (DCD) and End Of Frame (EOF) logic needs development.   
-#### Future
-I would like to get rid of kernal AX.25. Maybe ```tncattach``` could be modified to work with pseudo-terminals.
 #### Notes
 The IL2P description says the idle symbols are supposed to be alternating ```0101``` binary during ```txdelay``` and ```txtail``` but this doesn't work for PSK, so we send '00' and '11' as BPSK.   
 
