@@ -23,8 +23,7 @@
 #include "demod.h"
 #include "rx.h"
 #include "ax25_link.h"
-
-extern float m_offset_freq;
+#include "timing_error_detector.h"
 
 static pthread_t xmit_tid;
 
@@ -44,6 +43,9 @@ void rx_init(struct audio_s *pa)
             fprintf(stderr, "Fatal: Could not create audio receive thread\n");
             exit(1);
         }
+
+        create_timing_error_detector();
+        demod_init(pa);
     }
     else
     {
@@ -68,8 +70,12 @@ static void *rx_adev_thread(void *arg)
                  */
                 processSymbols(csamples);
 
-                if (m_offset_freq == 9999.0f)
+/* TODO - this is garbage
+  No telling what the freq is with static
+
+                if (get_offset_freq() == 9999.0f)
                     eof = true;
+*/
             } // else corrupt or missing rx data
         }
     }

@@ -71,7 +71,8 @@ extern "C"
 #define DEFAULT_PERSIST 63
 #define DEFAULT_TXDELAY 10
 #define DEFAULT_TXTAIL 10
-#define DEFAULT_FULLDUP 0
+//#define DEFAULT_FULLDUP 0
+#define DEFAULT_FULLDUP 1    //  testing
 
     int audio_open(struct audio_s *pa);
     int audio_get(void);

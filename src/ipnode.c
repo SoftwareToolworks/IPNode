@@ -167,11 +167,10 @@ int main(int argc, char *argv[])
     ax25_link_init(&misc_config);
     il2p_init();
 
-    tx_init(&audio_config);
-    modulate_init(&audio_config);
+    //tx_init(&audio_config);
+    //modulate_init(&audio_config);
 
-    rx_init(&audio_config);
-    demod_init(&audio_config);
+    rx_init(&audio_config);    // also inits demod and TED
 
     // ptt_init(&audio_config);          ///////////// disabled for debugging
 
@@ -191,5 +190,12 @@ void app_process_rec_packet(packet_t pp)
 
     int flen = ax25_pack(pp, fbuf);
 
+    for (int i = 0; i < flen; i++)
+    {
+       fprintf(stderr, "%02X", fbuf[i]);
+    }
+
+    fprintf(stderr, "\n");
+ 
     kisspt_send_rec_packet(KISS_CMD_DATA_FRAME, fbuf, flen); // KISS pseudo terminal
 }

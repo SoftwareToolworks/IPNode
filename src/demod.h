@@ -37,6 +37,7 @@ extern "C"
     void processSymbols(complex float[]);
     int demod_get_audio_level(struct demodulator_state_s *);
     int dcd_detect(void);
+    float get_offset_freq(void);
 
 #ifdef __cplusplus
 }

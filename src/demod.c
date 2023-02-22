@@ -45,7 +45,7 @@ static complex float m_rxPhase;
 static complex float m_rxRect;
 static complex float recvBlock[8]; // 8 CYCLES per symbol
 
-float m_offset_freq;
+static float m_offset_freq;
 
 static int dcdDetect;
 
@@ -83,7 +83,7 @@ static void detect_preamble()
 void demod_init(struct audio_s *pa)
 {
     save_audio_config_p = pa;
-    dcdDetect = 0;
+    dcdDetect = 1;
 
     m_rxRect = cmplxconj((TAU * CENTER) / FS);
     m_rxPhase = cmplx(0.0f);
@@ -251,5 +251,10 @@ void processSymbols(complex float csamples[])
      */
     il2p_rec_bit((diBits >> 1) & 0x1);
     il2p_rec_bit(diBits & 0x1);
+}
+
+float get_offset_freq()
+{
+    return m_offset_freq;
 }
 
