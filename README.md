@@ -76,7 +76,7 @@ $ sudo kissattach $(ls -l /tmp/kisstnc | awk '{print $NF}') ip172 172.30.10.1
 You should see a new interface called ```ax0``` which should look something like this:
 ```
 ax0: flags=67<UP,BROADCAST,RUNNING>  mtu 255
-        inet 172.30.10.1  netmask 255.255.0.0  broadcast 172.30.10.255
+        inet 172.30.10.1  netmask 255.255.0.0  broadcast 172.30.255.255
         ax25 W1AW-10  txqueuelen 10  (AMPR AX.25)
         RX packets 0  bytes 0 (0.0 B)
         RX errors 0  dropped 0  overruns 0  frame 0
