@@ -51,6 +51,8 @@
 
 #define IS_DIR_SEPARATOR(c) ((c) == '/')
 
+static struct audio_s audio_config;
+static struct misc_config_s misc_config;
 static char *progname;
 
 static void opt_help()
@@ -70,9 +72,6 @@ static void cleanup(int x)
     SLEEP_SEC(1);
     exit(0);
 }
-
-static struct audio_s audio_config;
-static struct misc_config_s misc_config;
 
 int main(int argc, char *argv[])
 {

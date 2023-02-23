@@ -209,7 +209,7 @@ void config_init(char *fname, struct audio_s *p_audio_config, struct misc_config
 
     memset(p_audio_config, 0, sizeof(struct audio_s));
 
-    strlcpy(p_audio_config->adevice_in, DEFAULT_ADEVICE, sizeof(p_audio_config->adevice_in));
+    strlcpy(p_audio_config->adevice_in, DEFAULT_ADEVICE, sizeof(p_audio_config->adevice_in));    // see audio.h
     strlcpy(p_audio_config->adevice_out, DEFAULT_ADEVICE, sizeof(p_audio_config->adevice_out));
 
     p_audio_config->defined = false;

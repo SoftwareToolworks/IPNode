@@ -115,6 +115,8 @@ typedef struct reg_callsign_s
 } reg_callsign_t;
 
 static reg_callsign_t *reg_callsign_list = NULL;
+static int dcd_status;
+static int ptt_status;
 
 #define SET_VS(n)    \
     {                \
@@ -151,53 +153,47 @@ static reg_callsign_t *reg_callsign_list = NULL;
 #define START_T3 start_t3(S)
 #define STOP_T3 stop_t3(S)
 
-static void dl_data_indication(ax25_dlsm_t *S, int pid, char *data, int len);
-
-static void i_frame(ax25_dlsm_t *S, cmdres_t cr, int p, int nr, int ns, int pid, char *info_ptr, int info_len);
-static void i_frame_continued(ax25_dlsm_t *S, int p, int ns, int pid, char *info_ptr, int info_len);
-static int is_ns_in_window(ax25_dlsm_t *S, int ns);
-static void send_srej_frames(ax25_dlsm_t *S, int *resend, int count, int allow_f1);
-static int resend_for_srej(ax25_dlsm_t *S, int nr, unsigned char *info, int info_len);
-static void rr_rnr_frame(ax25_dlsm_t *S, int ready, cmdres_t cr, int pf, int nr);
-static void rej_frame(ax25_dlsm_t *S, cmdres_t cr, int pf, int nr);
-static void srej_frame(ax25_dlsm_t *S, cmdres_t cr, int pf, int nr, unsigned char *info_ptr, int info_len);
-
-static void sabm_frame(ax25_dlsm_t *S, int p);
-static void disc_frame(ax25_dlsm_t *S, int f);
-static void dm_frame(ax25_dlsm_t *S, int f);
-static void ua_frame(ax25_dlsm_t *S, int f);
-static void frmr_frame(ax25_dlsm_t *S);
-static void ui_frame(ax25_dlsm_t *S, cmdres_t cr, int pf);
-
-static void t1_expiry(ax25_dlsm_t *S);
-static void t3_expiry(ax25_dlsm_t *S);
-
-static void nr_error_recovery(ax25_dlsm_t *S);
-static void clear_exception_conditions(ax25_dlsm_t *S);
-static void transmit_enquiry(ax25_dlsm_t *S);
-static void select_t1_value(ax25_dlsm_t *S);
-static void establish_data_link(ax25_dlsm_t *S);
-static void set_version_2_0(ax25_dlsm_t *S);
-static int is_good_nr(ax25_dlsm_t *S, int nr);
-static void i_frame_pop_off_queue(ax25_dlsm_t *S);
-static void discard_i_queue(ax25_dlsm_t *S);
-static void invoke_retransmission(ax25_dlsm_t *S, int nr_input);
-static void check_i_frame_ackd(ax25_dlsm_t *S, int nr);
-static void check_need_for_response(ax25_dlsm_t *S, ax25_frame_type_t frame_type, cmdres_t cr, int pf);
-static void enquiry_response(ax25_dlsm_t *S, ax25_frame_type_t frame_type, int f);
-
-static void enter_new_state(ax25_dlsm_t *S, enum dlsm_state_e new_state);
+static void dl_data_indication(ax25_dlsm_t *, int, char *, int);
+static void i_frame(ax25_dlsm_t *S, cmdres_t, int, int, int, int, char *, int);
+static void i_frame_continued(ax25_dlsm_t *, int, int, int, char *, int);
+static int is_ns_in_window(ax25_dlsm_t *, int);
+static void send_srej_frames(ax25_dlsm_t *, int *, int, int);
+static int resend_for_srej(ax25_dlsm_t *, int, unsigned char *, int);
+static void rr_rnr_frame(ax25_dlsm_t *, int, cmdres_t, int, int);
+static void rej_frame(ax25_dlsm_t *, cmdres_t, int, int);
+static void srej_frame(ax25_dlsm_t *, cmdres_t, int, int, unsigned char *, int);
+static void sabm_frame(ax25_dlsm_t *, int);
+static void disc_frame(ax25_dlsm_t *, int);
+static void dm_frame(ax25_dlsm_t *, int);
+static void ua_frame(ax25_dlsm_t *, int);
+static void frmr_frame(ax25_dlsm_t *);
+static void ui_frame(ax25_dlsm_t *, cmdres_t, int);
+static void t1_expiry(ax25_dlsm_t *);
+static void t3_expiry(ax25_dlsm_t *);
+static void nr_error_recovery(ax25_dlsm_t *);
+static void clear_exception_conditions(ax25_dlsm_t *);
+static void transmit_enquiry(ax25_dlsm_t *);
+static void select_t1_value(ax25_dlsm_t *);
+static void establish_data_link(ax25_dlsm_t *);
+static void set_version_2_0(ax25_dlsm_t *);
+static int is_good_nr(ax25_dlsm_t *, int);
+static void i_frame_pop_off_queue(ax25_dlsm_t *);
+static void discard_i_queue(ax25_dlsm_t *);
+static void invoke_retransmission(ax25_dlsm_t *, int);
+static void check_i_frame_ackd(ax25_dlsm_t *, int);
+static void check_need_for_response(ax25_dlsm_t *, ax25_frame_type_t, cmdres_t, int);
+static void enquiry_response(ax25_dlsm_t *, ax25_frame_type_t, int);
+static void enter_new_state(ax25_dlsm_t *, enum dlsm_state_e);
 
 // Use macros above rather than calling these directly.
 
-static void start_t1(ax25_dlsm_t *S);
-static void stop_t1(ax25_dlsm_t *S);
-static int is_t1_running(ax25_dlsm_t *S);
-static void pause_t1(ax25_dlsm_t *S);
-static void resume_t1(ax25_dlsm_t *S);
-
-static void start_t3(ax25_dlsm_t *S);
-static void stop_t3(ax25_dlsm_t *S);
+static void start_t1(ax25_dlsm_t *);
+static void stop_t1(ax25_dlsm_t *);
+static int is_t1_running(ax25_dlsm_t *);
+static void pause_t1(ax25_dlsm_t *);
+static void resume_t1(ax25_dlsm_t *);
+static void start_t3(ax25_dlsm_t *);
+static void stop_t3(ax25_dlsm_t *);
 
 static struct misc_config_s *g_misc_config_p;
 
@@ -292,17 +288,15 @@ static int next_stream_id = 0;
 
 static ax25_dlsm_t *get_link_handle(char addrs[AX25_ADDRS][AX25_MAX_ADDR_LEN], int client, int create)
 {
-
     ax25_dlsm_t *p;
 
     // Look for existing.
 
-    if (client == -1)
-    { // from the radio.
+    if (client == -1) // from the radio.
+    {
         // address order is reversed for compare.
         for (p = list_head; p != NULL; p = p->next)
         {
-
             if (strcmp(addrs[AX25_DESTINATION], p->addrs[OWNCALL]) == 0 &&
                 strcmp(addrs[AX25_SOURCE], p->addrs[PEERCALL]) == 0)
             {
@@ -311,11 +305,10 @@ static ax25_dlsm_t *get_link_handle(char addrs[AX25_ADDRS][AX25_MAX_ADDR_LEN], i
             }
         }
     }
-    else
-    { // from client app
+    else // from client app
+    {
         for (p = list_head; p != NULL; p = p->next)
         {
-
             if (p->client == client &&
                 strcmp(addrs[AX25_SOURCE], p->addrs[OWNCALL]) == 0 &&
                 strcmp(addrs[AX25_DESTINATION], p->addrs[PEERCALL]) == 0)
@@ -337,9 +330,8 @@ static ax25_dlsm_t *get_link_handle(char addrs[AX25_ADDRS][AX25_MAX_ADDR_LEN], i
 
     int incoming_for_client = -1; // which client app registered the callsign?
 
-    if (client == -1)
-    { // from the radio.
-
+    if (client == -1) // from the radio.
+    {
         reg_callsign_t *r, *found;
 
         found = NULL;
@@ -405,18 +397,14 @@ static void dl_data_indication(ax25_dlsm_t *S, int pid, char *data, int len)
 {
     if (S->ra_buff == NULL)
     {
-
         // Ready state.
-
         if (pid != AX25_PID_SEGMENTATION_FRAGMENT)
         {
             return;
         }
         else if (data[0] & 0x80)
         {
-
             // Ready state, First segment.
-
             S->ra_following = data[0] & 0x7f;
             int total = (S->ra_following + 1) * (len - 1) - 1; // len should be other side's N1
             S->ra_buff = cdata_new(data[1], NULL, total);
@@ -431,9 +419,7 @@ static void dl_data_indication(ax25_dlsm_t *S, int pid, char *data, int len)
     }
     else
     {
-
         // Reassembling data state
-
         if (pid != AX25_PID_SEGMENTATION_FRAGMENT)
         {
             fprintf(stderr, "Stream %d: AX.25 Reassembler Protocol Error Z: Not segment in reassembling state.\n", S->stream_id);
@@ -457,9 +443,7 @@ static void dl_data_indication(ax25_dlsm_t *S, int pid, char *data, int len)
         }
         else
         {
-
             // Reassembling data state, Not first segment.
-
             S->ra_following = data[0] & 0x7f;
             if (S->ra_buff->len + len - 1 <= S->ra_buff->size)
             {
@@ -484,16 +468,10 @@ static void dl_data_indication(ax25_dlsm_t *S, int pid, char *data, int len)
     }
 }
 
-static int dcd_status;
-static int ptt_status;
-
 void lm_channel_busy(dlq_item_t *E)
 {
-    int busy;
-
     switch (E->activity)
     {
-
     case OCTYPE_DCD:
         dcd_status = E->status;
         break;
@@ -506,7 +484,7 @@ void lm_channel_busy(dlq_item_t *E)
         break;
     }
 
-    busy = dcd_status | ptt_status;
+    int busy = dcd_status | ptt_status;
 
     /*
      * We know if the given radio channel is busy or not.
@@ -742,7 +720,6 @@ static void i_frame(ax25_dlsm_t *S, cmdres_t cr, int p, int nr, int ns, int pid,
 {
     switch (S->state)
     {
-
     case state_0_disconnected:
 
         // Logic from flow chart for "all other commands."
@@ -965,30 +942,21 @@ static void i_frame_continued(ax25_dlsm_t *S, int p, int ns, int pid, char *info
 
 static int is_ns_in_window(ax25_dlsm_t *S, int ns)
 {
-    int adjusted_vr, adjusted_ns, adjusted_vrpk;
-
     /* Shift all values relative to V(R) before comparing so we won't have wrap around. */
 
 #define adjust_by_vr(x) (AX25MODULO((x)-S->vr))
 
-    adjusted_vr = adjust_by_vr(S->vr); // A clever compiler would know it is zero.
-    adjusted_ns = adjust_by_vr(ns);
-    adjusted_vrpk = adjust_by_vr(S->vr + 63); // 63 generous
+    int adjusted_vr = adjust_by_vr(S->vr); // A clever compiler would know it is zero.
+    int adjusted_ns = adjust_by_vr(ns);
+    int adjusted_vrpk = adjust_by_vr(S->vr + 63); // 63 generous
 
-    int result = adjusted_vr < adjusted_ns && adjusted_ns < adjusted_vrpk;
+    int result = (adjusted_vr < adjusted_ns) && (adjusted_ns < adjusted_vrpk);
 
     return result;
 }
 
 static void send_srej_frames(ax25_dlsm_t *S, int *resend, int count, int allow_f1)
 {
-    int f; // Set if we are ack-ing one before.
-    int nr;
-    cmdres_t cr = cr_res; // SREJ is always response.
-    int i;
-
-    packet_t pp;
-
     if (count <= 0)
     {
         fprintf(stderr, "Fatal: INTERNAL ERROR, count=%d\n", count);
@@ -1004,14 +972,14 @@ static void send_srej_frames(ax25_dlsm_t *S, int *resend, int count, int allow_f
         fprintf(stderr, "state=%d, count=%d, k=%d, V(R)=%d\n", S->state, count, S->k_maxframe, S->vr);
         fprintf(stderr, "resend[]=");
 
-        for (i = 0; i < count; i++)
+        for (int i = 0; i < count; i++)
         {
             fprintf(stderr, " %d", resend[i]);
         }
 
         fprintf(stderr, "\nrxdata_by_ns[]=");
 
-        for (i = 0; i < 128; i++)
+        for (int i = 0; i < 128; i++)
         {
             if (S->rxdata_by_ns[i] != NULL)
             {
@@ -1022,23 +990,24 @@ static void send_srej_frames(ax25_dlsm_t *S, int *resend, int count, int allow_f
         fprintf(stderr, "\n");
     }
 
-    for (i = 0; i < count; i++)
+    for (int i = 0; i < count; i++)
     {
-        nr = resend[i];
-        f = allow_f1 && (nr == S->vr);
+        int nr = resend[i];
+        int f = allow_f1 && (nr == S->vr);  // Set if we are ack-ing one before.
 
         if (f)
         {
             S->acknowledge_pending = 0;
         }
 
-        if (nr < 0 || nr >= 8)
+        if (nr < 0 || nr >= 8)  // TODO - what the heck is this??
         {
             fprintf(stderr, "INTERNAL ERROR, nr=%d\n", nr);
             nr = AX25MODULO(nr);
         }
 
-        pp = ax25_s_frame(S->addrs, cr, frame_type_S_SREJ, nr, f, NULL, 0);
+        packet_t pp = ax25_s_frame(S->addrs, cr_res, frame_type_S_SREJ, nr, f, NULL, 0);// SREJ is always response. (p.s. cr_res is an enum)
+        
         lm_data_request(TQ_PRIO_1_LO, pp);
     }
 }

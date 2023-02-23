@@ -74,9 +74,9 @@ extern "C"
 //#define DEFAULT_FULLDUP 0
 #define DEFAULT_FULLDUP 1    //  testing
 
-    int audio_open(struct audio_s *pa);
+    int audio_open(struct audio_s *);
     int audio_get(void);
-    void audio_put(unsigned char c);
+    void audio_put(unsigned char);
     void audio_flush(void);
     void audio_wait(void);
     void audio_close(void);
