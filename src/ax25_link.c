@@ -1000,7 +1000,7 @@ static void send_srej_frames(ax25_dlsm_t *S, int *resend, int count, int allow_f
             S->acknowledge_pending = 0;
         }
 
-        if (nr < 0 || nr >= 8)  // TODO - what the heck is this??
+        if (nr < 0 || nr >= 8)
         {
             fprintf(stderr, "INTERNAL ERROR, nr=%d\n", nr);
             nr = AX25MODULO(nr);
