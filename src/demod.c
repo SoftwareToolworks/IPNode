@@ -185,6 +185,10 @@ void processSymbols(complex float csamples[])
 
     complex float decision = getMiddleSample(); // use middle TED sample
 
+#ifdef DEBUG
+fprintf(stderr, "%.2f %.2f\n", crealf(decision), cimagf(decision));
+#endif
+
     float fsam = cnormf(decision);
 
     if (fsam >= D->alevel_rec_peak)

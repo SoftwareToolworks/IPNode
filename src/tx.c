@@ -76,6 +76,8 @@ void tx_init(struct audio_s *p_modem)
         fprintf(stderr, "Fatal: Could not create transmitter thread for modem\n");
         exit(1);
     }
+
+    modulate_init();
 }
 
 static bool wait_for_clear_channel(int slottime, int persist, bool fulldup)

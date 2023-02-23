@@ -24,8 +24,6 @@
 
 // Properties of the digitized sound stream & modem.
 
-static struct audio_s *save_audio_config_p = NULL;
-
 static int bit_count;
 static int save_bit;
 
@@ -36,10 +34,8 @@ static complex float m_txRect;
 
 static complex float *m_qpsk;
 
-void modulate_init(struct audio_s *audio_config_p)
+void modulate_init()
 {
-    save_audio_config_p = audio_config_p;
-
     bit_count = 0;
     save_bit = 0;
 

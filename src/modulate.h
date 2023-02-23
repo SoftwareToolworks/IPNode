@@ -18,7 +18,7 @@ extern "C"
 
 #include "audio.h"
 
-    void modulate_init(struct audio_s *pp);
+    void modulate_init(void);
     void put_bit(unsigned char bit);
 
 #ifdef __cplusplus

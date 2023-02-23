@@ -167,17 +167,15 @@ int main(int argc, char *argv[])
     ax25_link_init(&misc_config);
     il2p_init();
 
-    tx_init(&audio_config);
-    modulate_init(&audio_config);
-
+    tx_init(&audio_config);    // also inits modulate
     rx_init(&audio_config);    // also inits demod and TED
 
     // ptt_init(&audio_config);          ///////////// disabled for debugging
 
-    kisspt_init();
-    kiss_frame_init(&audio_config);
+    kisspt_init();                    // kiss pseudo-terminal
+    kiss_frame_init(&audio_config);   // normal kiss
 
-    // Run daemon process
+    // Run daemon process forever
 
     rx_process();
 
@@ -190,12 +188,14 @@ void app_process_rec_packet(packet_t pp)
 
     int flen = ax25_pack(pp, fbuf);
 
+#ifdef DEBUG
     for (int i = 0; i < flen; i++)
     {
        fprintf(stderr, "%02X", fbuf[i]);
     }
 
     fprintf(stderr, "\n");
- 
+#endif
+
     kisspt_send_rec_packet(KISS_CMD_DATA_FRAME, fbuf, flen); // KISS pseudo terminal
 }
