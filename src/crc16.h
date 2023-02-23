@@ -16,7 +16,7 @@ extern "C"
 {
 #endif
 
-    unsigned short crc16(unsigned char *data, int len);
+    unsigned short crc16(unsigned char *, int);
 
 #ifdef __cplusplus
 }

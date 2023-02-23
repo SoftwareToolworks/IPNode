@@ -8,6 +8,11 @@
 
 #pragma once
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <complex.h>
 #include <stdbool.h>
 
@@ -21,4 +26,8 @@ void revert(bool);
 complex float getMiddleSample(void);
 float get_error(void);
 int get_inputs_per_symbol(void);
+
+#ifdef __cplusplus
+}
+#endif
 

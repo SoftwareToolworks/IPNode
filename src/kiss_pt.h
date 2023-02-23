@@ -21,7 +21,7 @@ extern "C"
 #include "kiss_frame.h"
 
     void kisspt_init(void);
-    void kisspt_send_rec_packet(int kiss_cmd, unsigned char *fbuf, int flen);
+    void kisspt_send_rec_packet(int, unsigned char *, int);
 
 #ifdef __cplusplus
 }

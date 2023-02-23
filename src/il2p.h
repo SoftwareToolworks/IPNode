@@ -73,24 +73,24 @@ extern "C"
     } il2p_payload_properties_t;
 
     void il2p_init(void);
-    struct rs *il2p_find_rs(int nparity);
-    void il2p_encode_rs(unsigned char *tx_data, int data_size, int num_parity, unsigned char *parity_out);
-    int il2p_decode_rs(unsigned char *rec_block, int data_size, int num_parity, unsigned char *out);
-    void il2p_rec_bit(int dbit);
-    int il2p_send_frame(packet_t pp);
-    void il2p_send_idle(int nbits);
-    int il2p_encode_frame(packet_t pp, unsigned char *iout);
-    packet_t il2p_decode_frame(unsigned char *irec);
-    packet_t il2p_decode_header_payload(unsigned char *uhdr, unsigned char *epayload, int *symbols_corrected);
-    int il2p_type_1_header(packet_t pp, unsigned char *hdr);
-    packet_t il2p_decode_header_type_1(unsigned char *hdr, int num_sym_changed);
-    int il2p_clarify_header(unsigned char *irec, unsigned char *uhdr);
-    void il2p_scramble_block(unsigned char *in, unsigned char *out, int len);
-    void il2p_descramble_block(unsigned char *in, unsigned char *out, int len);
-    int il2p_payload_compute(il2p_payload_properties_t *p, int payload_size);
-    int il2p_encode_payload(unsigned char *payload, int payload_size, unsigned char *enc);
-    int il2p_decode_payload(unsigned char *received, int payload_size, unsigned char *payload_out, int *symbols_corrected);
-    int il2p_get_header_attributes(unsigned char *hdr);
+    struct rs *il2p_find_rs(int);
+    void il2p_encode_rs(unsigned char *, int, int, unsigned char *);
+    int il2p_decode_rs(unsigned char *, int, int, unsigned char *);
+    void il2p_rec_bit(int);
+    int il2p_send_frame(packet_t);
+    void il2p_send_idle(int);
+    int il2p_encode_frame(packet_t, unsigned char *);
+    packet_t il2p_decode_frame(unsigned char *);
+    packet_t il2p_decode_header_payload(unsigned char *, unsigned char *, int *);
+    int il2p_type_1_header(packet_t, unsigned char *);
+    packet_t il2p_decode_header_type_1(unsigned char *, int);
+    int il2p_clarify_header(unsigned char *, unsigned char *);
+    void il2p_scramble_block(unsigned char *, unsigned char *, int);
+    void il2p_descramble_block(unsigned char *, unsigned char *, int);
+    int il2p_payload_compute(il2p_payload_properties_t *, int);
+    int il2p_encode_payload(unsigned char *, int, unsigned char *);
+    int il2p_decode_payload(unsigned char *, int, unsigned char *, int *);
+    int il2p_get_header_attributes(unsigned char *);
 
 #ifdef __cplusplus
 }

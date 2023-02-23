@@ -55,9 +55,9 @@ extern "C"
     }
 #define MODNN(x) modnn(rs, x)
 
-    void encode_rs_char(struct rs *rs, unsigned char *data, unsigned char *bb);
-    int decode_rs_char(struct rs *rs, unsigned char *data, int *eras_pos, int no_eras);
-    struct rs *init_rs_char(unsigned int symsize, unsigned int gfpoly, unsigned int fcr, unsigned int prim, unsigned int nroots);
+    void encode_rs_char(struct rs *, unsigned char *, unsigned char *);
+    int decode_rs_char(struct rs *, unsigned char *, int *, int);
+    struct rs *init_rs_char(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int);
 
 #define FEC_MAX_CHECK 64
 #define FEC_BLOCK_SIZE 255

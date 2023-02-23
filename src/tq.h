@@ -54,14 +54,14 @@ extern "C"
     }                                                                                                           \
   }
 
-  void tq_init(struct audio_s *audio_config_p);
-  void tq_append(int prio, packet_t pp);
-  void lm_data_request(int prio, packet_t pp);
-  void lm_seize_request();
-  void tq_wait_while_empty();
-  packet_t tq_remove(int prio);
-  packet_t tq_peek(int prio);
-  int tq_count(int prio, char *source, char *dest, int bytes);
+  void tq_init(struct audio_s *);
+  void tq_append(int, packet_t);
+  void lm_data_request(int, packet_t);
+  void lm_seize_request(void);
+  void tq_wait_while_empty(void);
+  packet_t tq_remove(int);
+  packet_t tq_peek(int);
+  int tq_count(int, char *, char *, int);
 
 #ifdef __cplusplus
 }

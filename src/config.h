@@ -26,7 +26,7 @@ extern "C"
         int maxframe; /* Max frames to send before ACK.  mod 8 "Window" size. */
     };
 
-    void config_init(char *fname, struct audio_s *p_modem, struct misc_config_s *misc_config);
+    void config_init(char *, struct audio_s *, struct misc_config_s *);
 
 #ifdef __cplusplus
 }

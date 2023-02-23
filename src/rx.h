@@ -18,7 +18,7 @@ extern "C"
 
 #include "audio.h"
 
-    void rx_init(struct audio_s *pa);
+    void rx_init(struct audio_s *);
     float rx_dc_average(void);
     void rx_process(void);
 

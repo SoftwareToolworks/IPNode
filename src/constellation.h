@@ -8,6 +8,11 @@
 
 #pragma once
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <complex.h>
 
 #define SQRT2 1.41421356237309504880
@@ -16,4 +21,8 @@ void createQPSKConstellation(void);
 complex float *getQPSKConstellation(void);
 complex float getQPSKQuadrant(unsigned char);
 unsigned char qpskToDiBit(complex float);
+
+#ifdef __cplusplus
+}
+#endif
 

@@ -18,10 +18,10 @@ extern "C"
 
 #include "audio.h"
 
-    void ptt_init(struct audio_s *p_modem);
-    void ptt_set(int octype, int ptt);
+    void ptt_init(struct audio_s *);
+    void ptt_set(int, int);
     void ptt_term(void);
-    int get_input(int it);
+    int get_input(int);
 
 #ifdef __cplusplus
 }

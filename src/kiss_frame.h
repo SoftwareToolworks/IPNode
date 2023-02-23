@@ -40,9 +40,9 @@ extern "C"
         unsigned char kiss_msg[MAX_KISS_LEN];
     } kiss_frame_t;
 
-    void kiss_frame_init(struct audio_s *pa);
-    int kiss_encapsulate(unsigned char *in, int ilen, unsigned char *out);
-    void kiss_rec_byte(kiss_frame_t *kf, unsigned char ch, int client, void (*sendfun)(int kiss_cmd, unsigned char *fbuf, int flen));
+    void kiss_frame_init(struct audio_s *);
+    int kiss_encapsulate(unsigned char *, int, unsigned char *);
+    void kiss_rec_byte(kiss_frame_t *, unsigned char, int, void (*sendfun)(int, unsigned char *, int));
 
 #ifdef __cplusplus
 }

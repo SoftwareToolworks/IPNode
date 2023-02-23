@@ -47,7 +47,7 @@ extern "C"
 
 #define il2p_mutex_init(x) pthread_mutex_init(x, NULL)
 
-    void app_process_rec_packet(packet_t pp);
+    void app_process_rec_packet(packet_t);
 
 #ifdef __cplusplus
 }

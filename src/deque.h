@@ -7,6 +7,11 @@
  */
 #pragma once
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <stdbool.h>
 
 struct dnode;
@@ -36,4 +41,8 @@ unsigned int size(deque *);
 void *pop_front(deque *);
 void *pop_back(deque *);
 void empty_deque(deque *);
+
+#ifdef __cplusplus
+}
+#endif
 

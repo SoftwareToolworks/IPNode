@@ -53,14 +53,14 @@ extern "C"
     } dlq_item_t;
 
     void dlq_init(void);
-    void dlq_rec_frame(packet_t pp);
-    void dlq_channel_busy(int activity, int status);
-    void dlq_seize_confirm();
-    int dlq_wait_while_empty(double timeout_val);
+    void dlq_rec_frame(packet_t);
+    void dlq_channel_busy(int, int);
+    void dlq_seize_confirm(void);
+    int dlq_wait_while_empty(double);
     struct dlq_item_s *dlq_remove(void);
-    void dlq_delete(struct dlq_item_s *pitem);
-    cdata_t *cdata_new(int pid, char *data, int len);
-    void cdata_delete(cdata_t *txdata);
+    void dlq_delete(struct dlq_item_s *);
+    cdata_t *cdata_new(int pid, char *, int);
+    void cdata_delete(cdata_t *);
 
 #ifdef __cplusplus
 }
