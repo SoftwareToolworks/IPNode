@@ -18,7 +18,8 @@ extern "C"
 
 #include "audio.h"
 
-    void tx_init(struct audio_s *p_modem);
+    void tx_init(struct audio_s *);
+    void put_bit(unsigned char);
 
 #ifdef __cplusplus
 }

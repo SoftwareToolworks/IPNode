@@ -14,7 +14,7 @@
 #include <string.h>
 
 #include "ipnode.h"
-#include "modulate.h"
+#include "tx.h"
 #include "il2p.h"
 #include "audio.h"
 

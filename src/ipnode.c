@@ -39,7 +39,6 @@
 #include "kiss_pt.h"
 #include "kiss_frame.h"
 #include "rrc_fir.h"
-#include "modulate.h"
 #include "tq.h"
 #include "tx.h"
 #include "ptt.h"
@@ -167,7 +166,7 @@ int main(int argc, char *argv[])
     ax25_link_init(&misc_config);
     il2p_init();
 
-    tx_init(&audio_config);    // also inits modulate
+    tx_init(&audio_config);
     rx_init(&audio_config);    // also inits demod and TED
 
     // ptt_init(&audio_config);          ///////////// disabled for debugging

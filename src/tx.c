@@ -19,6 +19,7 @@
 #include <math.h>
 #include <errno.h>
 #include <stddef.h>
+#include <complex.h>
 
 #include "ipnode.h"
 #include "ax25_link.h"
@@ -26,11 +27,12 @@
 #include "audio.h"
 #include "il2p.h"
 #include "demod.h"
-#include "modulate.h"
 #include "tq.h"
 #include "tx.h"
 #include "ptt.h"
 #include "dlq.h"
+#include "rrc_fir.h"
+#include "constellation.h"
 
 #define WAIT_TIMEOUT_MS (60 * 1000)
 #define WAIT_CHECK_EVERY_MS 10
@@ -49,10 +51,23 @@ static void *tx_thread(void *arg);
 static bool wait_for_clear_channel(int slotttime, int persist, bool fulldup);
 static void tx_frames(int prio, packet_t pp);
 static int send_one_frame(packet_t pp);
+static void tx_symbol(complex float);
 
 static pthread_t tx_tid;
 static pthread_mutex_t audio_out_dev_mutex;
 static struct audio_s *save_audio_config_p;
+
+// Properties of the digitized sound stream & modem.
+
+static int bit_count;
+static int save_bit;
+
+static complex float tx_filter[NTAPS];
+
+static complex float m_txPhase;
+static complex float m_txRect;
+
+static complex float *m_qpsk;
 
 void tx_init(struct audio_s *p_modem)
 {
@@ -77,7 +92,84 @@ void tx_init(struct audio_s *p_modem)
         exit(1);
     }
 
-    modulate_init();
+    bit_count = 0;
+    save_bit = 0;
+
+    // Center Frequency is 1000 Hz
+
+    m_txRect = cmplx((TAU * CENTER) / FS);
+    m_txPhase = cmplx(0.0f);
+    
+    m_qpsk = getQPSKConstellation();
+}
+
+/*
+ * Modulate and upsample one symbol
+ */
+static void tx_symbol(complex float symbol)
+{
+    complex float signal[CYCLES];
+
+    /*
+     * Input symbol at RS baud
+     *
+     * Upsample to FS by zero padding
+     */
+    signal[0] = symbol;
+
+    for (int i = 1; i < CYCLES; i++)
+    {
+        signal[i] = 0.0f;
+    }
+
+    /*
+     * Root Cosine Filter
+     */
+    rrc_fir(tx_filter, signal, CYCLES);
+
+    /*
+     * Shift Baseband to Center Frequency
+     */
+
+    for (int i = 0; i < CYCLES; i++)
+    {
+        m_txPhase *= m_txRect;
+        signal[i] = (signal[i] * m_txPhase) * 8192.0f; // Factor PCM amplitude
+    }
+
+    m_txPhase /= cabsf(m_txPhase); // normalize as magnitude can drift
+
+    /*
+     * Store PCM I and Q in audio output buffer
+     */
+    for (int i = 0; i < CYCLES; i++)
+    {
+        signed short pcm = (signed short)(crealf(signal[i])); // I
+        audio_put(pcm & 0xff);
+        audio_put((pcm >> 8) & 0xff);
+
+        pcm = (signed short)(cimagf(signal[i])); // Q
+        audio_put(pcm & 0xff);
+        audio_put((pcm >> 8) & 0xff);
+    }
+}
+
+void put_bit(unsigned char bit)
+{
+    if (bit_count == 0) // wait for 2 bits
+    { 
+        save_bit = bit;
+        bit_count++;
+
+        return;
+    }
+
+    unsigned char dibit = (save_bit << 1) | bit;
+
+    tx_symbol(getQPSKQuadrant(dibit));
+
+    save_bit = 0; // reset for next bits
+    bit_count = 0;
 }
 
 static bool wait_for_clear_channel(int slottime, int persist, bool fulldup)
