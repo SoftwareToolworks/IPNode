@@ -47,10 +47,10 @@ static int tx_bits_per_sec;
 #define BITS_TO_MS(b) (((b)*1000) / tx_bits_per_sec)
 #define MS_TO_BITS(ms) (((ms)*tx_bits_per_sec) / 1000)
 
-static void *tx_thread(void *arg);
-static bool wait_for_clear_channel(int slotttime, int persist, bool fulldup);
-static void tx_frames(int prio, packet_t pp);
-static int send_one_frame(packet_t pp);
+static void *tx_thread(void *);
+static bool wait_for_clear_channel(int, int, bool);
+static void tx_frames(int, packet_t);
+static int send_one_frame(packet_t);
 static void tx_symbol(complex float);
 
 static pthread_t tx_tid;

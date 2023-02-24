@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include "ipnode.h"
@@ -108,14 +109,27 @@ int il2p_send_frame(packet_t pp)
     return number_of_bits_sent;
 }
 
+static bool flip = false;
+
 /*
  * Send txdelay and txtail to modulator
  */
 void il2p_send_idle(int nbits)
 {
-    for (int i = 0; i < nbits; i++)
+    for (int i = 0; i < (nbits / 2); i++)
     {
-        put_bit(0);
+        if (flip == false)
+        {
+            put_bit(0);
+            put_bit(0);
+            flip = true;
+        }
+        else
+        {
+            put_bit(1);
+            put_bit(1);
+            flip = false;
+        }
     }
 
     number_of_bits_sent += nbits;

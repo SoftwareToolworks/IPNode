@@ -40,20 +40,21 @@ int kiss_encapsulate(unsigned char *in, int ilen, unsigned char *out)
     out[olen++] = FEND;
     for (j = 0; j < ilen; j++)
     {
+        unsigned char chr = in[j];
 
-        if (in[j] == FEND)
+        if (chr == FEND)
         {
             out[olen++] = FESC;
             out[olen++] = TFEND;
         }
-        else if (in[j] == FESC)
+        else if (chr == FESC)
         {
             out[olen++] = FESC;
             out[olen++] = TFESC;
         }
         else
         {
-            out[olen++] = in[j];
+            out[olen++] = chr;
         }
     }
     out[olen++] = FEND;
@@ -94,8 +95,9 @@ static int kiss_unwrap(unsigned char *in, int ilen, unsigned char *out)
 
     for (; j < ilen; j++)
     {
+        unsigned char chr = in[j];
 
-        if (in[j] == FEND)
+        if (chr == FEND)
         {
             fprintf(stderr, "KISS frame should not have FEND in the middle.\n");
         }
@@ -103,28 +105,28 @@ static int kiss_unwrap(unsigned char *in, int ilen, unsigned char *out)
         if (escaped_mode)
         {
 
-            if (in[j] == TFESC)
+            if (chr == TFESC)
             {
                 out[olen++] = FESC;
             }
-            else if (in[j] == TFEND)
+            else if (chr == TFEND)
             {
                 out[olen++] = FEND;
             }
             else
             {
-                fprintf(stderr, "KISS protocol error.  Found 0x%02x after FESC.\n", in[j]);
+                fprintf(stderr, "KISS protocol error.  Found 0x%02x after FESC.\n", chr);
             }
 
             escaped_mode = 0;
         }
-        else if (in[j] == FESC)
+        else if (chr == FESC)
         {
             escaped_mode = 1;
         }
         else
         {
-            out[olen++] = in[j];
+            out[olen++] = chr;
         }
     }
 
@@ -136,7 +138,6 @@ static int kiss_unwrap(unsigned char *in, int ilen, unsigned char *out)
  */
 void kiss_rec_byte(kiss_frame_t *kf, unsigned char chr, int client)
 {
-
     switch (kf->state)
     {
 
@@ -153,7 +154,6 @@ void kiss_rec_byte(kiss_frame_t *kf, unsigned char chr, int client)
     case KS_COLLECTING: /* Frame collection in progress. */
         if (chr == FEND)
         {
-
             unsigned char unwrapped[AX25_MAX_PACKET_LEN];
 
             /* End of frame. */

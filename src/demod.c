@@ -83,7 +83,7 @@ static void detect_preamble()
 void demod_init(struct audio_s *pa)
 {
     save_audio_config_p = pa;
-    dcdDetect = 1;
+    dcdDetect = 0;
 
     m_rxRect = cmplxconj((TAU * CENTER) / FS);
     m_rxPhase = cmplx(0.0f);

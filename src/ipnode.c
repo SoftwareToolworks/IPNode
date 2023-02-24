@@ -186,14 +186,5 @@ void app_process_rec_packet(packet_t pp)
 
     int flen = ax25_pack(pp, fbuf);
 
-#ifdef DEBUG
-    for (int i = 0; i < flen; i++)
-    {
-       fprintf(stderr, "%02X", fbuf[i]);
-    }
-
-    fprintf(stderr, "\n");
-#endif
-
     kisspt_send_rec_packet(KISS_CMD_DATA_FRAME, fbuf, flen); // KISS pseudo terminal
 }
