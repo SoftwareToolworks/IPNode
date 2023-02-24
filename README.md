@@ -11,13 +11,11 @@ IL2P was built upon AX.25 Version 2.0, thus a lot of the Version 2.2 functionali
 
 The modem uses the ALSA Linux Soundcard 16-bit stereo channel PCM, at a fixed 9.6 kHz sample rate. The network interface uses a Linux pseudo-terminal running the KISS protocol. This interfaces to the AX.25 Level 3 networking using the ```kissattach``` program, making the modem routable over IP.   
 #### Status
-No Worky - Currently the code is quite a mess with threads and audio.
+The missing piece of the puzzle, is a method of determining Data Carrier Detect (DCD). A squelch type circuit monitoring the receive audio.
 
 Ubuntu desktop is used for development. The PTT code is currently commented out to prevent core dumps, as the desktop doesn't have the GPIO, but the idea is to run this on a Linux microcontroller when fully developed.   
 
 The GPIO will need PTT, DCD, Connect, and Sync as interface lines.   
-
-The Data Carrier Detect (DCD) and End Of Frame (EOF) logic needs development.   
 #### Notes
 The IL2P description says the idle symbols are supposed to be alternating ```0101``` binary during ```txdelay``` and ```txtail``` but this doesn't work for PSK, so we send '00' and '11' as 1200 Baud BPSK.   
 
