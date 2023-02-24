@@ -116,17 +116,22 @@ static bool flip = false;
  */
 void il2p_send_idle(int nbits)
 {
+    if ((nbits % 2) != 0)
+    {
+        nbits++;  // make it even
+    }
+
     for (int i = 0; i < (nbits / 2); i++)
     {
         if (flip == false)
         {
-            put_bit(0);
+            put_bit(0); // BPSK lower left quadrant
             put_bit(0);
             flip = true;
         }
         else
         {
-            put_bit(1);
+            put_bit(1);  // BPSK upper right quadrant
             put_bit(1);
             flip = false;
         }
