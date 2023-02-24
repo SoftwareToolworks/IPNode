@@ -24,7 +24,7 @@
 #define CLEAR_LAST_ADDR_FLAG this_p->frame_data[2 * 7 - 1] &= ~SSID_LAST_MASK
 #define SET_LAST_ADDR_FLAG this_p->frame_data[2 * 7 - 1] |= SSID_LAST_MASK
 
-static int set_addrs(packet_t pp, char addrs[][AX25_MAX_ADDR_LEN], cmdres_t cr);
+static int set_addrs(packet_t, char[][AX25_MAX_ADDR_LEN], cmdres_t);
 
 static volatile int new_count = 0;
 static volatile int delete_count = 0;
@@ -40,7 +40,7 @@ packet_t ax25_new()
         fprintf(stderr, "Error: Memory leak new=%d, delete=%d\n", new_count, delete_count);
     }
 
-    struct packet_s *this_p = calloc(1, sizeof(struct packet_s));
+    struct packet_s *this_p = (struct packet_s *)calloc(1, sizeof(struct packet_s));
 
     if (this_p == NULL)
     {

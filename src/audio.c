@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
 #include <sys/types.h>
@@ -30,29 +31,34 @@
 
 #define roundup1k(n) (((n) + 0x3ff) & ~0x3ff)
 
+/*
+ * FYI snd_pcm_t is a typedef of struct _snd_pcm
+ * Which is located in pcm_local.h in dev package
+ *
+ * https://github.com/alsa-project/alsa-lib/blob/master/src/pcm/pcm_local.h
+ */
+
 static struct
 {
     snd_pcm_t *audio_in_handle;
     snd_pcm_t *audio_out_handle;
-    int bytes_per_frame;
-
-    int inbuf_size_in_bytes;
-    int outbuf_size_in_bytes;
-
-    int inbuf_len;
-    int outbuf_len;
-
-    int inbuf_next;
 
     unsigned char *inbuf_ptr;
     unsigned char *outbuf_ptr;
+
+    int bytes_per_frame;
+    int inbuf_size_in_bytes;
+    int outbuf_size_in_bytes;
+    int inbuf_len;
+    int outbuf_len;
+    int inbuf_next;
 } adev;
 
 static struct audio_s *save_audio_config_p;
 static int channels;
 static int bits_per_sample;
 
-static int set_alsa_params(snd_pcm_t *handle, struct audio_s *pa, char *name, char *dir);
+static int set_alsa_params(snd_pcm_t *, struct audio_s *, char *, char *);
 
 int audio_open(struct audio_s *pa)
 {
@@ -253,7 +259,7 @@ static int set_alsa_params(snd_pcm_t *handle, struct audio_s *pa, char *devname,
 
     /*
      * A "frame" is one sample for all channels
-     *     
+     *
      * The read and write use units of frames, not bytes
      */
     adev.bytes_per_frame = snd_pcm_frames_to_bytes(handle, 1);

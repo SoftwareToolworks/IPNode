@@ -42,7 +42,7 @@ extern "C"
 
     void kiss_frame_init(struct audio_s *);
     int kiss_encapsulate(unsigned char *, int, unsigned char *);
-    void kiss_rec_byte(kiss_frame_t *, unsigned char, int, void (*sendfun)(int, unsigned char *, int));
+    void kiss_rec_byte(kiss_frame_t *, unsigned char, int);
 
 #ifdef __cplusplus
 }

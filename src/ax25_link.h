@@ -29,7 +29,7 @@ extern "C"
 #define AX25_N2_RETRY_MAX 15
 
 #define AX25_T1V_FRACK_MIN 1     // Number of seconds to wait before retrying.
-#define AX25_T1V_FRACK_DEFAULT 3 // KPC-3+ has 4.  TM-D710A has 3.
+#define AX25_T1V_FRACK_DEFAULT 3
 #define AX25_T1V_FRACK_MAX 15
 
 #define AX25_K_MAXFRAME_MIN 1 // Window size - number of I frames to send before waiting for ack.
@@ -38,10 +38,10 @@ extern "C"
 
     double dtime_now(void);
     double ax25_link_get_next_timer_expiry(void);
-    void ax25_link_init(struct misc_config_s *pconfig);
-    void lm_data_indication(dlq_item_t *E);
-    void lm_seize_confirm(dlq_item_t *E);
-    void lm_channel_busy(dlq_item_t *E);
+    void ax25_link_init(struct misc_config_s *);
+    void lm_data_indication(dlq_item_t *);
+    void lm_seize_confirm(dlq_item_t *);
+    void lm_channel_busy(dlq_item_t *);
     void dl_timer_expiry(void);
 
 #ifdef __cplusplus

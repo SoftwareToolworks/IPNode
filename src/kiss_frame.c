@@ -21,9 +21,8 @@
 #include "tq.h"
 #include "tx.h"
 
-static void kiss_process_msg(unsigned char *kiss_msg, int kiss_len, int client,
-                             void (*sendfun)(int kiss_cmd, unsigned char *fbuf, int flen));
-static int kiss_unwrap(unsigned char *in, int ilen, unsigned char *out);
+static void kiss_process_msg(unsigned char *, int, int);
+static int kiss_unwrap(unsigned char *, int, unsigned char *);
 
 static struct audio_s *save_audio_config_p;
 
@@ -135,8 +134,7 @@ static int kiss_unwrap(unsigned char *in, int ilen, unsigned char *out)
 /*
  * Call from pseudo_terminal
  */
-void kiss_rec_byte(kiss_frame_t *kf, unsigned char chr, int client,
-                   void (*sendfun)(int kiss_cmd, unsigned char *fbuf, int flen))
+void kiss_rec_byte(kiss_frame_t *kf, unsigned char chr, int client)
 {
 
     switch (kf->state)
@@ -177,7 +175,7 @@ void kiss_rec_byte(kiss_frame_t *kf, unsigned char chr, int client,
 
             int ulen = kiss_unwrap(kf->kiss_msg, kf->kiss_len, unwrapped);
 
-            kiss_process_msg(unwrapped, ulen, client, sendfun);
+            kiss_process_msg(unwrapped, ulen, client);
 
             kf->state = KS_SEARCHING;
             return;
@@ -194,8 +192,7 @@ void kiss_rec_byte(kiss_frame_t *kf, unsigned char chr, int client,
     }
 }
 
-static void kiss_process_msg(unsigned char *kiss_msg, int kiss_len, int client,
-                             void (*sendfun)(int kiss_cmd, unsigned char *fbuf, int flen))
+static void kiss_process_msg(unsigned char *kiss_msg, int kiss_len, int client)
 {
     int cmd = kiss_msg[0] & 0xf;
     packet_t pp;

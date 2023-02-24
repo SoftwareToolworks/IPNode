@@ -79,28 +79,28 @@ extern "C"
     } ax25_frame_type_t;
 
     packet_t ax25_new(void);
-    packet_t ax25_from_frame(unsigned char *data, int len);
-    void ax25_delete(packet_t pp);
-    int ax25_parse_addr(int position, char *in_addr, char *out_addr, int *out_ssid);
-    void ax25_get_addr_with_ssid(packet_t pp, int n, char *station);
-    void ax25_get_addr_no_ssid(packet_t pp, int n, char *station);
-    int ax25_get_ssid(packet_t pp, int n);
-    int ax25_get_info(packet_t pp, unsigned char **paddr);
-    void ax25_set_info(packet_t pp, unsigned char *info_ptr, int info_len);
-    void ax25_set_nextp(packet_t this_p, packet_t next_p);
-    packet_t ax25_get_nextp(packet_t this_p);
-    int ax25_pack(packet_t pp, unsigned char result[AX25_MAX_PACKET_LEN]);
-    ax25_frame_type_t ax25_frame_type(packet_t this_p, cmdres_t *cr, int *pf, int *nr, int *ns);
-    int ax25_is_null_frame(packet_t this_p);
-    int ax25_get_control(packet_t this_p);
+    packet_t ax25_from_frame(unsigned char *, int);
+    void ax25_delete(packet_t);
+    int ax25_parse_addr(int, char *, char *, int *);
+    void ax25_get_addr_with_ssid(packet_t, int, char *);
+    void ax25_get_addr_no_ssid(packet_t, int, char *);
+    int ax25_get_ssid(packet_t, int);
+    int ax25_get_info(packet_t, unsigned char **);
+    void ax25_set_info(packet_t, unsigned char *, int);
+    void ax25_set_nextp(packet_t, packet_t);
+    packet_t ax25_get_nextp(packet_t);
+    int ax25_pack(packet_t, unsigned char[AX25_MAX_PACKET_LEN]);
+    ax25_frame_type_t ax25_frame_type(packet_t, cmdres_t *, int *, int *, int *);
+    int ax25_is_null_frame(packet_t);
+    int ax25_get_control(packet_t);
     int ax25_get_control_offset(void);
-    int ax25_get_pid(packet_t this_p);
-    int ax25_get_frame_len(packet_t this_p);
-    unsigned char *ax25_get_frame_data_ptr(packet_t this_p);
+    int ax25_get_pid(packet_t);
+    int ax25_get_frame_len(packet_t);
+    unsigned char *ax25_get_frame_data_ptr(packet_t);
 
-    packet_t ax25_u_frame(char addrs[][AX25_MAX_ADDR_LEN], cmdres_t cr, ax25_frame_type_t ftype, int pf, int pid, unsigned char *pinfo, int info_len);
-    packet_t ax25_s_frame(char addrs[][AX25_MAX_ADDR_LEN], cmdres_t cr, ax25_frame_type_t ftype, int nr, int pf, unsigned char *pinfo, int info_len);
-    packet_t ax25_i_frame(char addrs[][AX25_MAX_ADDR_LEN], cmdres_t cr, int nr, int ns, int pf, int pid, unsigned char *pinfo, int info_len);
+    packet_t ax25_u_frame(char[][AX25_MAX_ADDR_LEN], cmdres_t, ax25_frame_type_t, int, int, unsigned char *, int);
+    packet_t ax25_s_frame(char[][AX25_MAX_ADDR_LEN], cmdres_t, ax25_frame_type_t, int, int, unsigned char *, int);
+    packet_t ax25_i_frame(char[][AX25_MAX_ADDR_LEN], cmdres_t, int, int, int, int, unsigned char *, int);
 
 #ifdef __cplusplus
 }

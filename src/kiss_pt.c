@@ -227,11 +227,13 @@ static int kisspt_get()
 
 static void *kisspt_listen_thread(void *arg)
 {
+    unsigned char chr;
+
     while (1)
     {
-        unsigned char chr = kisspt_get();
+        chr = kisspt_get();  // calls select() so waits for data
 
-        kiss_rec_byte(&kf, chr, -1, kisspt_send_rec_packet);
+        kiss_rec_byte(&kf, chr, -1);
     }
 
     return (void *)0;
