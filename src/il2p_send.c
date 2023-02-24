@@ -22,47 +22,6 @@
 static int number_of_bits_sent;
 
 /*
- * BPSK 128 symbol Pseudo Noise (PN) sequence
- */
-#if 0
-unsigned char pn_preamble[] = {
-    0, 1, 1, 0, 0, 1, 1, 1,
-    0, 1, 0, 0, 1, 1, 0, 0,
-    1, 1, 0, 1, 0, 0, 1, 0,
-    1, 0, 1, 0, 1, 0, 1, 1,
-    1, 0, 1, 1, 1, 1, 0, 0,
-    1, 0, 0, 1, 1, 0, 1, 0,
-    1, 1, 0, 1, 0, 0, 1, 0,
-    0, 0, 0, 1, 1, 0, 1, 0,
-    1, 1, 1, 0, 0, 1, 1, 0,
-    1, 1, 0, 0, 1, 1, 0, 1,
-    1, 0, 1, 1, 0, 0, 0, 1,
-    0, 1, 0, 1, 0, 0, 0, 1,
-    0, 0, 1, 0, 1, 1, 0, 0,
-    0, 0, 0, 1, 1, 1, 0, 1,
-    1, 0, 1, 1, 0, 0, 1, 1,
-    0, 1, 0, 1, 0, 0, 0, 1
-};
-
-/*
- * Send BPSK PN to modulator
- */
-static void il2p_send_pn_preamble() {
-    for (int i = 0; i < sizeof(pn_preamble); i++) {
-        if (pn_preamble[i] == 0) {
-            put_bit(0);
-            put_bit(0);
-        } else {
-            put_bit(1);
-            put_bit(1);
-        }
-
-        number_of_bits_sent += 2;
-    }
-}
-#endif
-
-/*
  * Send data to modulator
  */
 static void il2p_send_data(unsigned char *b, int count)
@@ -109,8 +68,6 @@ int il2p_send_frame(packet_t pp)
     return number_of_bits_sent;
 }
 
-static bool flip = false;
-
 /*
  * Send txdelay and txtail to modulator
  */
@@ -121,20 +78,13 @@ void il2p_send_idle(int nbits)
         nbits++;  // make it even
     }
 
-    for (int i = 0; i < (nbits / 2); i++)
+    for (int i = 0; i < (nbits / 4); i++)
     {
-        if (flip == false)
-        {
-            put_bit(0); // BPSK lower left quadrant
-            put_bit(0);
-            flip = true;
-        }
-        else
-        {
-            put_bit(1);  // BPSK upper right quadrant
-            put_bit(1);
-            flip = false;
-        }
+        put_bit(0); // BPSK lower left quadrant
+        put_bit(0);
+
+        put_bit(1);  // BPSK upper right quadrant
+        put_bit(1);
     }
 
     number_of_bits_sent += nbits;

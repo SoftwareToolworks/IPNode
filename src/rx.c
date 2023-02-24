@@ -30,6 +30,8 @@ static pthread_t xmit_tid;
 static void *rx_adev_thread(void *arg);
 static struct audio_s *save_pa; /* Keep pointer to audio configuration */
 
+bool node_shutdown;
+
 void rx_init(struct audio_s *pa)
 {
     save_pa = pa;
@@ -46,6 +48,8 @@ void rx_init(struct audio_s *pa)
 
         create_timing_error_detector();
         demod_init(pa);
+
+        node_shutdown = false;
     }
     else
     {
@@ -57,30 +61,19 @@ void rx_init(struct audio_s *pa)
 static void *rx_adev_thread(void *arg)
 {
     complex float csamples[CYCLES];
-    bool eof = 0;
 
-    while (eof == false)
+    while (node_shutdown == false)
     {
-        if (dcd_detect())
+        if (dcd_detect() == true)
         {
             if (demod_get_samples(csamples) == true)
             {
-                /*
-                 * m_offset_freq Set to 9999 if eof
-                 */
                 processSymbols(csamples);
-
-/* TODO - this is garbage
-  No telling what the freq is with static
-
-                if (get_offset_freq() == 9999.0f)
-                    eof = true;
-*/
-            } // else corrupt or missing rx data
+            }
         }
     }
 
-    fprintf(stderr, "Shutdown: Terminating after audio input closed.\n");
+    fprintf(stderr, "\nShutdown: Terminating after audio input closed.\n");
     exit(1);
 }
 

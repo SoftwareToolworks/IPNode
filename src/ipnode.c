@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <getopt.h>
 #include <string.h>
 #include <signal.h>
@@ -49,6 +50,8 @@
 #include "costas_loop.h"
 #include "constellation.h"
 
+extern bool node_shutdown;
+
 #define IS_DIR_SEPARATOR(c) ((c) == '/')
 
 static struct audio_s audio_config;
@@ -66,6 +69,8 @@ static void opt_help()
 
 static void cleanup(int x)
 {
+    node_shutdown = true; // kill tx/rx threads
+
     ptt_term();
     audio_close();
 
@@ -160,6 +165,8 @@ int main(int argc, char *argv[])
      * and should be set around TAU/100 to TAU/200
      */
     create_control_loop((TAU / 180.0f), -1.0f, 1.0f);
+
+    node_shutdown = false;
 
     dlq_init();
     ax25_link_init(&misc_config);

@@ -47,7 +47,7 @@ static complex float recvBlock[8]; // 8 CYCLES per symbol
 
 static float m_offset_freq;
 
-static int dcdDetect;
+static bool dcdDetect;
 
 static float cnormf(complex float val)
 {
@@ -57,33 +57,15 @@ static float cnormf(complex float val)
     return (realf * realf) + (imagf * imagf);
 }
 
-int dcd_detect()
+bool dcd_detect()
 {
     return dcdDetect;
 }
 
-#ifdef PREAMBLE
-static void detect_preamble()
-{
-    /*
-     * TODO - Detect preamble and postamble
-     * and declare/clear DCD
-     */
-
-    ptt_set(OCTYPE_DCD, 1); // turn on the LED
-    dcdDetect = 1;
-    return 1;
-
-    ptt_set(OCTYPE_DCD, 0); // turn off the LED
-    dcdDetect = 0;
-    return 0;
-}
-#endif
-
 void demod_init(struct audio_s *pa)
 {
     save_audio_config_p = pa;
-    dcdDetect = 0;
+    dcdDetect = false;
 
     m_rxRect = cmplxconj((TAU * CENTER) / FS);
     m_rxPhase = cmplx(0.0f);
@@ -184,10 +166,6 @@ void processSymbols(complex float csamples[])
     }
 
     complex float decision = getMiddleSample(); // use middle TED sample
-
-#ifdef DEBUG
-fprintf(stderr, "%.2f %.2f\n", crealf(decision), cimagf(decision));
-#endif
 
     float fsam = cnormf(decision);
 

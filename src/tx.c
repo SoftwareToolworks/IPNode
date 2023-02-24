@@ -34,6 +34,8 @@
 #include "rrc_fir.h"
 #include "constellation.h"
 
+extern bool node_shutdown;
+
 #define WAIT_TIMEOUT_MS (60 * 1000)
 #define WAIT_CHECK_EVERY_MS 10
 
@@ -154,6 +156,12 @@ static void tx_symbol(complex float symbol)
     }
 }
 
+/*
+ * Transmit bits
+ *
+ * This routine will wait for two bits which
+ * makes the dibit index for QPSK quadrant
+ */
 void put_bit(unsigned char bit)
 {
     if (bit_count == 0) // wait for 2 bits
@@ -181,7 +189,7 @@ static bool wait_for_clear_channel(int slottime, int persist, bool fulldup)
 
     start_over_again:
 
-        while (dcd_detect())
+        while (dcd_detect() == true)
         {
             SLEEP_MS(WAIT_CHECK_EVERY_MS);
 
@@ -198,7 +206,7 @@ static bool wait_for_clear_channel(int slottime, int persist, bool fulldup)
             SLEEP_MS(save_audio_config_p->dwait * 10);
         }
 
-        if (dcd_detect())
+        if (dcd_detect() == true)
         {
             goto start_over_again;
         }
@@ -207,7 +215,7 @@ static bool wait_for_clear_channel(int slottime, int persist, bool fulldup)
         {
             SLEEP_MS(slottime * 10);
 
-            if (dcd_detect())
+            if (dcd_detect() == true)
             {
                 goto start_over_again;
             }
@@ -238,7 +246,7 @@ static bool wait_for_clear_channel(int slottime, int persist, bool fulldup)
 
 static void *tx_thread(void *arg)
 {
-    while (1)
+    while (node_shutdown == false)
     {
 
         tq_wait_while_empty();
