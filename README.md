@@ -31,7 +31,7 @@ The following shows a series of pings, with no station answering, and the beginn
 
 [Link to a recorded audio WAV file](docs/ipdata.wav)  
 
-This has an exagerated ```txdelay``` and ```txtail``` which is the 1 kHz beeps you hear.
+This has an exagerated ```txdelay``` and ```txtail``` which is the beeps you hear.
 
 What the spectrum looks like:   
 
