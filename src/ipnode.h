@@ -21,7 +21,7 @@ extern "C"
 #include <unistd.h>
 #include <pthread.h>
 
-#include "ax25_pad.h"
+#include "ax25_pad.h" // packet_t
 
 #define SLEEP_SEC(n) sleep(n)
 #define SLEEP_MS(n) usleep((n)*1000)
