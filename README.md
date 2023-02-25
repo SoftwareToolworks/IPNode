@@ -29,7 +29,7 @@ The following shows a series of pings, with no station answering, and the beginn
 
 This has an exagerated ```txdelay``` and ```txtail``` which is the beeps you hear.
 
-What the spectrum looks like:   
+What the spectrum looks like, and you would use upper-sideband SSB mode:   
 
 <img src="docs/actual-packet-data-spectrum.png" alt="actual spectrum" width="400"/>   
 
