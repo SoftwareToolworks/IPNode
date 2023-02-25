@@ -1,17 +1,13 @@
 #### A 10 Meter 1200 Baud QPSK IP Node
-Based on the Dire Wolf repository, it removes all the APRS, Repeaters, Beacons, FSK, and AFSK. The intent is to create a Linux based microcontroller with GPIO Push-To-Talk (PTT) Packet Radio Node transmitting QPSK. Currently set for 1200 Baud/2400 bit/s at 9600 sampling rate. It uses a Root-Raised-Cosine (RRC) matched filter on transmit and receive, and a slightly modified Improved Level 2 Protocol (IL2P). The Garner Timing Error Detection (TED) and Costas Loop is translated from GNU Radio.   
+Based on highly modified Dire Wolf repository, to create a Linux based QPSK Packet Radio Node designed for 10 meter band. This band has a maximum symbol rate of 1200 Baud in the US, so a maximum of 2400 bit/s, and uses an I/Q sampling rate of 9600 bit/s. A Root-Raised-Cosine (RRC) matched filter is used on transmit and receive, and a slightly modified Improved Level 2 Protocol (IL2P) encodes the data onto AX.25 packets. A Garner Timing Error Detection (TED). and a Costas Loop is used on receive. This is a point-point link, as no digipeaters are used.
 
-Designed for Internet Protocol (IP) use on 10 meters, which has a regulatory limit of 1200 Baud, and must operate in the **28.120 - 28.189 MHz** band if automatically controlled.   
+Designed for Internet Protocol (IP) use, it must operate in the **28.120 - 28.189 MHz** band if automatically controlled. The center frequency of ```1000 Hz``` keeps the signal well inside the audio bandpass of most radios.   
 
-The center frequency of ```1000 Hz``` was chosen to keep the signal in the audio bandpass of most radios. You could move this higher to about ```1600 Hz```, but this is the limit for most radios.   
+IL2P only uses the maximum FEC and Header Type 1. It is used to transport Level 3 Internet Protocol (IP). There is some Broadcast functionality for ARP, Node Identification, and multicast UDP. The KISS is limited to sending data, and control commands are masked off.   
 
-The use of digipeaters have been removed, so the functionality of a repeater can be replaced using full-duplex (or cross-band) techniques. This prevents hidden nodes.   
-
-IL2P was built upon AX.25 Version 2.0, thus a lot of the Version 2.2 functionality is not used in this protocol. The protocol was also modified to be hard-wired using only the maximum FEC and Header Type 1, as it is the most useful. It is used to transport Level 3 Internet Protocol (IP). There is some Broadcast functionality left, used for ARP, Node Identification, and multicast UDP. The KISS commands from the kernel are limited to sending data, and other command types are not processed.   
-
-The modem uses the ALSA Linux Soundcard 16-bit stereo channel PCM, at a fixed 9.6 kHz sample rate. The network interface uses a Linux pseudo-terminal running the KISS protocol. This interfaces to the AX.25 Level 3 networking using the ```kissattach``` program, making the modem routable over IP.   
+The modem uses the ALSA Linux Soundcard 16-bit 2-channel PCM, at a fixed 9600 bit/s sample rate. The network interface uses a Linux pseudo-terminal running the KISS protocol. This interfaces to the kernel AX.25 using the ```kissattach``` program, making the modem routable over IP.   
 #### Status
-The missing piece of the puzzle, is a method of determining Data Carrier Detect (DCD). A squelch type circuit monitoring the receive audio.
+The missing piece of the puzzle, is a method of determining Data Carrier Detect (DCD). A squelch type circuit monitoring the receive audio is needed.
 
 Ubuntu desktop is used for development. The PTT code is currently commented out to prevent core dumps, as the desktop doesn't have the GPIO, but the idea is to run this on a Linux microcontroller when fully developed.   
 
@@ -37,18 +33,12 @@ What the spectrum looks like:
 
 <img src="docs/actual-packet-data-spectrum.png" alt="actual spectrum" width="400"/>   
 
-This is 1 kHz +/- 800 Hz or 1600 Hz bandwidth, so the **emission** symbol would be **1K60J2D**.
+This is 1 kHz +/- 800 Hz or 1600 Hz bandwidth, so the emission symbol would be **1K60J2D**.
 #### Startup
 The ```ipnode``` program runs in a loop with three threads (tx, rx, and kiss). It will read the config file ```ipnode.conf``` if available, and begin running.
 ```
-$ ipnode -h
-
-usage: ipnode [options]
-
-  --help    Print this message
-
+$ ipnode >>ipnode.log &
 ```
-
 Using ax25-tools and ```kissattach``` command seems to work well as the pseudo-terminal kiss interface.
 
 Example:
@@ -61,14 +51,8 @@ Create the ```/etc/ax25/axports``` file:
 #
 ip172 W1AW-10 0	256 7	ip172 port (1200 Baud QPSK)
 ```
-
-Execute like:
+To use the AX.25 pseudo-terminal:
 ```
-$ ipnode >>ipnode.log & 
-Audio device for both receive and transmit: default
-Created symlink /tmp/kisstnc -> /dev/pts/2
-Virtual KISS TNC is available on /dev/pts/2
-
 $ sudo kissattach $(ls -l /tmp/kisstnc | awk '{print $NF}') ip172
 $ sudo ip addr add 172.30.10.1/24 dev ax0
 ```
