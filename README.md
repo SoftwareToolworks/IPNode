@@ -14,25 +14,12 @@ Ubuntu desktop is used for development. The PTT code is currently commented out 
 The GPIO will need PTT, DCD, Connect, and Sync as interface lines.   
 #### Notes
 The IL2P description says the idle symbols are supposed to be alternating ```0101``` binary during ```txdelay``` and ```txtail``` but this doesn't work for PSK, so we send '00' and '11' as 1200 Baud BPSK.   
-
 ```
 +----------------------+-------------+---------------------+
 | txdelay idle symbols | IL2P packet | txtail idle symbols |
 +----------------------+-------------+---------------------+
    ramp-up transmitter     payload    ramp-down transmitter
 ```
-The following shows a series of pings, with no station answering, and the beginning is extranoues output from the chrome browser over UDP:   
-
-<img src="docs/time-domain.png" alt="time-domain"/>   
-
-[Link to a recorded audio WAV file](docs/ipdata.wav)  
-
-This has an exagerated ```txdelay``` and ```txtail``` which is the beeps you hear.
-
-What the spectrum looks like, and you would use upper-sideband SSB mode:   
-
-<img src="docs/actual-packet-data-spectrum.png" alt="actual spectrum" width="400"/>   
-
 This is 1 kHz +/- 800 Hz or 1600 Hz bandwidth, so the emission symbol would be **1K60J2D**.
 #### Startup
 The ```ipnode``` program runs in a loop with three threads (tx, rx, and kiss). It will read the config file ```ipnode.conf``` if available, and begin running.
