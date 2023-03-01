@@ -6,7 +6,7 @@
  * save_array_c_header(h,"filtP700S900","coefs.h")
  */
 
-const int filtP700S900[129]={
+const float filtP700S900[129] = {
    0.0003725376577433,
    0.0003949108395859,
    0.0003154050460060,
