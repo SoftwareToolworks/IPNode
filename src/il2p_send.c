@@ -133,7 +133,7 @@ static void put_frame_bits(int length)
             m_save_bit = m_tx_bits[i];
             m_bit_count++;
 
-            return;
+            continue;
         }
 
         unsigned char dibit = (m_save_bit << 1) | m_tx_bits[i];
@@ -207,20 +207,18 @@ void il2p_send_idle(int nbits)
         nbits++;  // make it even
     }
 
-    unsigned char *dibits = (unsigned char *)calloc(nbits * 2, sizeof(unsigned char));
+    m_tx_bits = (unsigned char *)calloc(nbits * 2, sizeof(unsigned char));
 
     for (int i = 0; i < (nbits * 2); i += 4)
     {
-        dibits[i] = 1;     // +BPSK
-        dibits[i + 1] = 1;
+        m_tx_bits[i] = 1;     // +BPSK
+        m_tx_bits[i + 1] = 1;
 
-        dibits[i + 2] = 0; // -BPSK
-        dibits[i + 3] = 0;
+        m_tx_bits[i + 2] = 0; // -BPSK
+        m_tx_bits[i + 3] = 0;
     }
 
     put_frame_bits(nbits * 2);
-
-    free(dibits);
 
     m_number_of_bits_sent += nbits;
 }

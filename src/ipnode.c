@@ -122,12 +122,12 @@ int main(int argc, char *argv[])
 
     node_shutdown = false;
 
+    tx_init(&audio_config);
+    rx_init(&audio_config);    // also inits demod and TED
+
     dlq_init();
     ax25_link_init(&misc_config);
     il2p_init();
-
-    tx_init(&audio_config);
-    rx_init(&audio_config);    // also inits demod and TED
 
     // ptt_init(&audio_config);          ///////////// disabled for debugging
 
