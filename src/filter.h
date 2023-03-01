@@ -24,5 +24,5 @@ void quisk_filt_destroy(struct quisk_cfFilter *);
 void quisk_cfTune(struct quisk_cfFilter *, float);
 void quisk_ccfFilter(complex float *, complex float *, int, struct quisk_cfFilter *);
 
-extern float filtP700S900[];
+extern const float filtP700S900[];
 
