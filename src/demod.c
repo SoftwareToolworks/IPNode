@@ -30,7 +30,7 @@
 #include "rx.h"
 #include "il2p.h"
 #include "costas_loop.h"
-#include "rrc_fir.h"
+#include "coefs-P700S900.h"
 #include "ptt.h"
 #include "constellation.h"
 #include "timing_error_detector.h"
@@ -150,12 +150,7 @@ void processSymbols(complex float csamples[])
 
     m_rxPhase /= cabsf(m_rxPhase); // normalize oscillator as magnitude can drift
 
-    /*
-     * Baseband Root Cosine low-pass Filter
-     *
-     * We're still at 9600 sample rate
-     */
-    rrc_fir(rx_filter, recvBlock, CYCLES);
+    //rrc_fir(rx_filter, recvBlock, CYCLES);           REPLACE THIS
 
     /*
      * Decimate by 4 for TED calculation (two samples per symbol)
