@@ -23,8 +23,10 @@
 
 extern int m_bit_count;
 extern int m_save_bit;
-extern complex float m_txPhase;
-extern complex float m_txRect;
+
+complex float m_txPhase;
+complex float m_txRect;
+complex float *m_qpsk;
 
 static complex float *m_tx_symbols;
 static unsigned char *m_tx_bits;
@@ -117,29 +119,26 @@ static void put_symbols()
 
 /*
  * Transmit bits
- *
- * This routine will wait for two bits which
- * makes the dibit index for QPSK quadrant
  */
-static void put_frame_bits()
+static void put_frame_bits(int length)
 {
     int symbol_count = 0;
 
-    m_tx_symbols = (complex float *)calloc(m_number_of_bits_sent / 2, sizeof(complex float));
+    m_tx_symbols = (complex float *)calloc(length, sizeof(complex float));
 
-    for (int i = 0; i < m_number_of_bits_sent; i++)
+    for (int i = 0; i < length; i++)
     {
         if (m_bit_count == 0) // wait for 2 bits
         {
-            m_save_bit = tx_bits[i];
+            m_save_bit = m_tx_bits[i];
             m_bit_count++;
 
             return;
         }
 
-        unsigned char dibit = (m_save_bit << 1) | tx_bits[i];
+        unsigned char dibit = (m_save_bit << 1) | m_tx_bits[i];
 
-        tx_symbols[symbol_count++] = getQPSKQuadrant(dibit);
+        m_tx_symbols[symbol_count++] = getQPSKQuadrant(dibit);
 
         m_save_bit = 0; // reset for next bits
         m_bit_count = 0;
@@ -192,29 +191,37 @@ int il2p_send_frame(packet_t pp)
         m_number_of_bits_sent += 8;
     }
 
-    put_frame_bits();
+    put_frame_bits(m_number_of_bits_sent / 2);
 
     return m_number_of_bits_sent;
 }
 
 /*
  * Send txdelay and txtail symbols to modulator
+ * It's called for bits, but we synd dibits
  */
-void il2p_send_idle(int nsymbols)
+void il2p_send_idle(int nbits)
 {
-    if ((nsymbols % 2) != 0)
+    if ((nbits % 2) != 0)
     {
-        nsymbols++;  // make it even
+        nbits++;  // make it even
     }
 
-    for (int i = 0; i < (nsymbols / 2); i++)
-    {
-        put_bit(1); // +BPSK
-        put_bit(1);
+    unsigned char *dibits = (unsigned char *)calloc(nbits * 2, sizeof(unsigned char));
 
-        put_bit(0); // -BPSK
-        put_bit(0);
+    for (int i = 0; i < (nbits * 2); i += 4)
+    {
+        dibits[i] = 1;     // +BPSK
+        dibits[i + 1] = 1;
+
+        dibits[i + 2] = 0; // -BPSK
+        dibits[i + 3] = 0;
     }
 
-    m_number_of_bits_sent += nsymbols;
+    put_frame_bits(nbits * 2);
+
+    free(dibits);
+
+    m_number_of_bits_sent += nbits;
 }
+

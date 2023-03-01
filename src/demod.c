@@ -40,7 +40,6 @@
 static struct audio_s *save_audio_config_p;
 static struct demodulator_state_s demodulator_state;
 
-static complex float rx_filter[NTAPS];
 static complex float m_rxPhase;
 static complex float m_rxRect;
 static complex float recvBlock[8]; // 8 CYCLES per symbol

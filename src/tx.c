@@ -35,6 +35,10 @@
 #include "constellation.h"
 
 extern bool node_shutdown;
+extern complex float m_txPhase;
+extern complex float m_txRect;
+
+extern complex float *m_qpsk;
 
 #define WAIT_TIMEOUT_MS (60 * 1000)
 #define WAIT_CHECK_EVERY_MS 10
@@ -57,13 +61,6 @@ static int send_one_frame(packet_t);
 static pthread_t tx_tid;
 static pthread_mutex_t audio_out_dev_mutex;
 static struct audio_s *save_audio_config_p;
-
-// Properties of the digitized sound stream & modem.
-
-static complex float m_txPhase;
-static complex float m_txRect;
-
-static complex float *m_qpsk;
 
 int m_bit_count;
 int m_save_bit;
