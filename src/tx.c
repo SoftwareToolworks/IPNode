@@ -31,7 +31,7 @@
 #include "tx.h"
 #include "ptt.h"
 #include "dlq.h"
-#include "coefs-P700S900.h"
+#include "filter.h"
 #include "constellation.h"
 
 extern bool node_shutdown;
@@ -60,15 +60,13 @@ static struct audio_s *save_audio_config_p;
 
 // Properties of the digitized sound stream & modem.
 
-static int bit_count;
-static int save_bit;
-
-static complex float tx_filter[NTAPS];
-
 static complex float m_txPhase;
 static complex float m_txRect;
 
 static complex float *m_qpsk;
+
+int m_bit_count;
+int m_save_bit;
 
 void tx_init(struct audio_s *p_modem)
 {
@@ -93,8 +91,8 @@ void tx_init(struct audio_s *p_modem)
         exit(1);
     }
 
-    bit_count = 0;
-    save_bit = 0;
+    m_bit_count = 0;
+    m_save_bit = 0;
 
     // Center Frequency is 1000 Hz
 
@@ -102,110 +100,6 @@ void tx_init(struct audio_s *p_modem)
     m_txPhase = cmplx(0.0f);
 
     m_qpsk = getQPSKConstellation();
-}
-
-complex float interpolate(complex float a, complex float b, float x)
-{
-    return a + (b - a) * x / (float)RATE;
-}
-
-void resampler(complex float out[], complex float in[], int length)
-{
-    for (int i = 0; i < (length - 1); i++)
-    {
-        for (int j = 0; j < RATE; j++)
-        {
-            out[(i * RATE) + j] = interpolate(in[i], in[i + 1], (float)j);
-        }
-    }
-
-    for (int i = 0; i < RATE; i++)
-    {
-        out[((length - 1) * RATE) + i] = interpolate(in[length - 2], in[length - 1], (float)(i * RATE));
-    }
-}
-
-static void clip(complex float samples[], float thresh, int n)
-{
-    for (int i = 0; i < n; i++)
-    {
-        complex float sam = samples[i];
-        float mag = cabsf(sam);
-
-        if (mag > thresh)
-        {
-            sam *= thresh / mag;
-        }
-
-        samples[i] = sam;
-    }
-}
-
-/*
- * Modulate and upsample one symbol
- */
-void tx_symbol(complex float symbol)
-{
-    complex float signal[CYCLES];
-
-    /////////////// THIS ALL NEEDS REWORK ///////////////////
-    /*
-     * Use linear interpolation to change the
-     * sample rate from 1200 to 9600.
-     */
-    resampler(signal, symbols, length);
-
-    clip(signal, 1.9f, outputSize);
-
-    /*
-     * Shift Baseband to Passband
-     */
-
-    for (int i = 0; i < CYCLES; i++)
-    {
-        m_txPhase *= m_txRect;
-        signal[i] = (signal[i] * m_txPhase) * 8192.0f; // Factor PCM amplitude
-    }
-
-    m_txPhase /= cabsf(m_txPhase); // normalize as magnitude can drift
-
-    /*
-     * Store PCM I and Q in audio output buffer
-     */
-    for (int i = 0; i < CYCLES; i++)
-    {
-        signed short pcm = (signed short)(crealf(signal[i])); // I
-        audio_put(pcm & 0xff);
-        audio_put((pcm >> 8) & 0xff);
-
-        pcm = (signed short)(cimagf(signal[i])); // Q
-        audio_put(pcm & 0xff);
-        audio_put((pcm >> 8) & 0xff);
-    }
-}
-
-/*
- * Transmit bits
- *
- * This routine will wait for two bits which
- * makes the dibit index for QPSK quadrant
- */
-void put_bit(unsigned char bit)
-{
-    if (bit_count == 0) // wait for 2 bits
-    {
-        save_bit = bit;
-        bit_count++;
-
-        return;
-    }
-
-    unsigned char dibit = (save_bit << 1) | bit;
-
-    tx_symbol(getQPSKQuadrant(dibit));
-
-    save_bit = 0; // reset for next bits
-    bit_count = 0;
 }
 
 static bool wait_for_clear_channel(int slottime, int persist, bool fulldup)

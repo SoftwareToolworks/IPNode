@@ -21,27 +21,139 @@
 #include "audio.h"
 #include "constellation.h"
 
-static int number_of_bits_sent;
+extern int m_bit_count;
+extern int m_save_bit;
+extern complex float m_txPhase;
+extern complex float m_txRect;
 
-/*
- * Send byte to modulator MSB first
- */
-static void il2p_send_data(unsigned char *b, int count)
+static complex float *tx_symbols;
+static unsigned char *tx_bits;
+
+static int m_number_of_bits_sent;
+
+static complex float interpolate(complex float a, complex float b, float x)
 {
-    for (int j = 0; j < count; j++)
+    return a + (b - a) * x / (float)CYCLES;
+}
+
+static void resampler(complex float out[], complex float in[], int length)
+{
+    for (int i = 0; i < (length - 1); i++)
     {
-        unsigned char x = b[j];
-
-        for (int k = 0; k < 8; k++)
+        for (int j = 0; j < CYCLES; j++)
         {
-            put_bit((x & 0x80) != 0);
-            x <<= 1;
+            out[(i * CYCLES) + j] = interpolate(in[i], in[i + 1], (float)j);
         }
+    }
 
-        number_of_bits_sent += 8;
+    for (int i = 0; i < CYCLES; i++)
+    {
+        out[((length - 1) * CYCLES) + i] = interpolate(in[length - 2], in[length - 1], (float)(i * CYCLES));
     }
 }
 
+static void clip(complex float samples[], float thresh, int length)
+{
+    for (int i = 0; i < length; i++)
+    {
+        complex float sam = samples[i];
+        float mag = cabsf(sam);
+
+        if (mag > thresh)
+        {
+            sam *= thresh / mag;
+        }
+
+        samples[i] = sam;
+    }
+}
+
+/*
+ * Modulate and upsample one symbol
+ */
+static void put_symbols()
+{
+    int symbolsCount = m_number_of_bits_sent / 2;
+    int outputSize = CYCLES * symbolsCount;
+
+    complex float signal[outputSize]; // transmit signal
+
+    /*
+     * Use linear interpolation to change the
+     * sample rate from 1200 to 9600.
+     */
+    resampler(signal, tx_symbols, symbolsCount);
+
+/////////////// PUT FILTER HERE and maybe delete clip() /////////////////////////////////
+
+    clip(signal, 2.0f, outputSize);
+
+    /*
+     * Shift Baseband to Passband
+     */
+
+    for (int i = 0; i < outputSize; i++)
+    {
+        m_txPhase *= m_txRect;
+        signal[i] = (signal[i] * m_txPhase) * 8192.0f; // Factor PCM amplitude
+    }
+
+    m_txPhase /= cabsf(m_txPhase); // normalize as magnitude can drift
+
+    /*
+     * Store PCM I and Q in audio output buffer
+     */
+    for (int i = 0; i < outputSize; i++)
+    {
+        signed short pcm = (signed short)(crealf(signal[i])); // I
+        audio_put(pcm & 0xff);
+        audio_put((pcm >> 8) & 0xff);
+
+        pcm = (signed short)(cimagf(signal[i])); // Q
+        audio_put(pcm & 0xff);
+        audio_put((pcm >> 8) & 0xff);
+    }
+}
+
+/*
+ * Transmit bits
+ *
+ * This routine will wait for two bits which
+ * makes the dibit index for QPSK quadrant
+ */
+static void put_frame_bits()
+{
+    int symbol_count = 0;
+
+    tx_symbols = (complex float *)calloc(m_number_of_bits_sent / 2, sizeof(complex float));
+
+    for (int i = 0; i < m_number_of_bits_sent; i++)
+    {
+        if (m_bit_count == 0) // wait for 2 bits
+        {
+            m_save_bit = tx_bits[i];
+            m_bit_count++;
+
+            return;
+        }
+
+        unsigned char dibit = (m_save_bit << 1) | tx_bits[i];
+
+        tx_symbols[symbol_count++] = getQPSKQuadrant(dibit);
+
+        m_save_bit = 0; // reset for next bits
+        m_bit_count = 0;
+    }
+
+    put_symbols();
+
+    free(tx_symbols);
+    free(tx_bits);
+}
+
+/*
+ * Transmit bits are stored in tx_bits array
+ */
 int il2p_send_frame(packet_t pp)
 {
     unsigned char encoded[IL2P_MAX_PACKET_SIZE];
@@ -60,13 +172,29 @@ int il2p_send_frame(packet_t pp)
 
     elen += IL2P_SYNC_WORD_SIZE;
 
-    number_of_bits_sent = 0; // incremented in send_bit
+    tx_bits = (unsigned char *)calloc(elen, sizeof(unsigned char));
 
-    // Send bits to modulator.
+    m_number_of_bits_sent = 0; // incremented in send_bit
 
-    il2p_send_data(encoded, elen);
+   /*
+    * Send byte to modulator MSB first
+    */
+    for (int j = 0; j < elen; j++)
+    {
+        unsigned char x = encoded[j];
 
-    return number_of_bits_sent;
+        for (int k = 0; k < 8; k++)
+        {
+            tx_bits[(j * 8) + k] = (x & 0x80) != 0;
+            x <<= 1;
+        }
+
+        m_number_of_bits_sent += 8;
+    }
+
+    put_frame_bits();
+
+    return m_number_of_bits_sent;
 }
 
 /*
@@ -88,5 +216,5 @@ void il2p_send_idle(int nsymbols)
         put_bit(0);
     }
 
-    number_of_bits_sent += nsymbols;
+    m_number_of_bits_sent += nsymbols;
 }

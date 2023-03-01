@@ -42,6 +42,7 @@
 #include "il2p.h"
 #include "costas_loop.h"
 #include "constellation.h"
+#include "filter.h"
 
 extern bool node_shutdown;
 
@@ -106,6 +107,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    quisk_filt_cfInit();
     createQPSKConstellation();
 
     /*

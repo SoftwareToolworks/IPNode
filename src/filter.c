@@ -14,122 +14,66 @@
 #include "filter_coef.h"
 #include "ipnode.h"
 
-/*---------------------------------------------------------------------------*\
+extern const float filtP700S900[];
 
-  FUNCTIONS...: quisk_filt_cfInit
-  AUTHOR......: Jim Ahlstrom
-  DATE CREATED: 27 August 2015
-  MODIFIED: 4 June 2018
+static struct quisk_cfFilter filter;
 
-  Initialize a FIR filter that has complex samples, and either real or complex coefficients.
+void quisk_filt_cfInit() {
+    filter.dCoefs = filtP700S900;
+    filter.cSamples = (complex float *)calloc(NTAPS, sizeof(complex float));
+    filter.ptcSamp = filter.cSamples;
+    filter.cBuf = NULL;
+    filter.nBuf = 0;
 
-\*---------------------------------------------------------------------------*/
+    filter.cpxCoefs = (complex float *)calloc(NTAPS, sizeof(complex float));
 
-void quisk_filt_cfInit(struct quisk_cfFilter * filter, float * coefs, int taps) {
-    // Prepare a new filter using coefs and taps.  Samples are complex. Coefficients can
-    // be real or complex.
-    filter->dCoefs = coefs;
-    filter->cpxCoefs = NULL;
-    filter->cSamples = (complex float *)calloc(taps, sizeof(complex float));
-    filter->ptcSamp = filter->cSamples;
-    filter->nTaps = taps;
-    filter->cBuf = NULL;
-    filter->nBuf = 0;
-}
+    float tune = TAU * (CENTER / FS);
+    float D = (NTAPS - 1.0f) / 2.0f;
 
-/*---------------------------------------------------------------------------*\
-
-  FUNCTIONS...: quisk_filt_destroy
-  AUTHOR......: Jim Ahlstrom
-  DATE CREATED: 27 August 2015
-  MODIFIED: 4 June 2018
-
-  Destroy the FIR filter and free all resources.
-
-\*---------------------------------------------------------------------------*/
-
-void quisk_filt_destroy(struct quisk_cfFilter * filter) {
-    if (filter->cSamples) {
-        FREE(filter->cSamples);
-        filter->cSamples = NULL;
-    }
-
-    if (filter->cBuf) {
-        FREE(filter->cBuf);
-        filter->cBuf = NULL;
-    }
-
-    if (filter->cpxCoefs) {
-        FREE(filter->cpxCoefs);
-        filter->cpxCoefs = NULL;
-    }
-}
-
-/*---------------------------------------------------------------------------*\
-
-  FUNCTIONS...: quisk_cfTune
-  AUTHOR......: Jim Ahlstrom
-  DATE CREATED: 4 June 2018
-
-  Tune a low pass filter with float coefficients into an analytic I/Q bandpass filter
-  with complex coefficients.  The "freq" is the center frequency / sample rate.
-  If the float coefs represent a low pass filter with bandwidth 1 kHz, the new bandpass
-  filter has width 2 kHz. The filter can be re-tuned repeatedly.
-
-\*---------------------------------------------------------------------------*/
-
-void quisk_cfTune(struct quisk_cfFilter * filter, float freq) {
-    float D, tune;
-    int i;
-
-    if ( ! filter->cpxCoefs)
-        filter->cpxCoefs = (complex float *)MALLOC(filter->nTaps * sizeof(complex float));
-
-    tune = TAU * freq;
-    D = (filter->nTaps - 1.0f) / 2.0f;
-
-    for (i = 0; i < filter->nTaps; i++) {
+    for (int i = 0; i < NTAPS; i++) {
         float tval = tune * (i - D);
-        filter->cpxCoefs[i] = cmplx(tval) * filter->dCoefs[i];
+        filter.cpxCoefs[i] = cmplx(tval) * filter.dCoefs[i];
     }
 }
 
-/*---------------------------------------------------------------------------*\
+void quisk_filt_destroy() {
+    if (filter.cSamples) {
+        free(filter.cSamples);
+        filter.cSamples = NULL;
+    }
 
-  FUNCTIONS...: quisk_ccfFilter
-  AUTHOR......: Jim Ahlstrom
-  DATE CREATED: 4 June 2018
+    if (filter.cBuf) {
+        free(filter.cBuf);
+        filter.cBuf = NULL;
+    }
 
-  Filter complex samples using complex coefficients. The inSamples and outSamples may be
-  the same array. The loop runs forward over coefficients but backwards over samples.
-  Therefore, the coefficients must be reversed unless they are created by quisk_cfTune.
-  Low pass filter coefficients are symmetrical, so this does not usually matter.
+    if (filter.cpxCoefs) {
+        free(filter.cpxCoefs);
+        filter.cpxCoefs = NULL;
+    }
+}
 
-\*---------------------------------------------------------------------------*/
-
-void quisk_ccfFilter(complex float * inSamples, complex float * outSamples, int count, struct quisk_cfFilter * filter) {
-    int i, k;
+void quisk_ccfFilter(complex float *inSamples, complex float *outSamples, int count) {
     complex float * ptSample;
     complex float * ptCoef;
     complex float accum;
 
-    for (i = 0; i < count; i++) {
-        *filter->ptcSamp = inSamples[i];
+    for (int i = 0; i < count; i++) {
+        *filter.ptcSamp = inSamples[i];
         accum = 0.0f;
-        ptSample = filter->ptcSamp;
-        ptCoef = filter->cpxCoefs;
+        ptSample = filter.ptcSamp;
+        ptCoef = filter.cpxCoefs;
 
-        for (k = 0; k < filter->nTaps; k++, ptCoef++) {
+        for (int k = 0; k < NTAPS; k++, ptCoef++) {
             accum += *ptSample  *  *ptCoef;
 
-            if (--ptSample < filter->cSamples)
-                ptSample = filter->cSamples + filter->nTaps - 1;
+            if (--ptSample < filter.cSamples)
+                ptSample = filter.cSamples + NTAPS - 1;
         }
 
         outSamples[i] = accum;
 
-        if (++filter->ptcSamp >= filter->cSamples + filter->nTaps)
-            filter->ptcSamp = filter->cSamples;
+        if (++filter.ptcSamp >= filter.cSamples + NTAPS)
+            filter.ptcSamp = filter.cSamples;
     }
 }
-

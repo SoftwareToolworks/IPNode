@@ -30,7 +30,7 @@
 #include "rx.h"
 #include "il2p.h"
 #include "costas_loop.h"
-#include "coefs-P700S900.h"
+#include "filter.h"
 #include "ptt.h"
 #include "constellation.h"
 #include "timing_error_detector.h"
@@ -129,7 +129,7 @@ int demod_get_audio_level(struct demodulator_state_s *D)
  * QPSK Receive function
  *
  * Remove any frequency and timing offsets
- *
+ *                                                             THIS IS A MESS
  * Process one 1200 Baud symbol at 9600 rate
  */
 void processSymbols(complex float csamples[])
