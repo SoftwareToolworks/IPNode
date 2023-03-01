@@ -26,8 +26,8 @@ extern int m_save_bit;
 extern complex float m_txPhase;
 extern complex float m_txRect;
 
-static complex float *tx_symbols;
-static unsigned char *tx_bits;
+static complex float *m_tx_symbols;
+static unsigned char *m_tx_bits;
 
 static int m_number_of_bits_sent;
 
@@ -82,7 +82,7 @@ static void put_symbols()
      * Use linear interpolation to change the
      * sample rate from 1200 to 9600.
      */
-    resampler(signal, tx_symbols, symbolsCount);
+    resampler(signal, m_tx_symbols, symbolsCount);
 
 /////////////// PUT FILTER HERE and maybe delete clip() /////////////////////////////////
 
@@ -125,7 +125,7 @@ static void put_frame_bits()
 {
     int symbol_count = 0;
 
-    tx_symbols = (complex float *)calloc(m_number_of_bits_sent / 2, sizeof(complex float));
+    m_tx_symbols = (complex float *)calloc(m_number_of_bits_sent / 2, sizeof(complex float));
 
     for (int i = 0; i < m_number_of_bits_sent; i++)
     {
@@ -147,8 +147,8 @@ static void put_frame_bits()
 
     put_symbols();
 
-    free(tx_symbols);
-    free(tx_bits);
+    free(m_tx_symbols);
+    free(m_tx_bits);
 }
 
 /*
@@ -172,7 +172,7 @@ int il2p_send_frame(packet_t pp)
 
     elen += IL2P_SYNC_WORD_SIZE;
 
-    tx_bits = (unsigned char *)calloc(elen, sizeof(unsigned char));
+    m_tx_bits = (unsigned char *)calloc(elen, sizeof(unsigned char));
 
     m_number_of_bits_sent = 0; // incremented in send_bit
 
@@ -185,7 +185,7 @@ int il2p_send_frame(packet_t pp)
 
         for (int k = 0; k < 8; k++)
         {
-            tx_bits[(j * 8) + k] = (x & 0x80) != 0;
+            m_tx_bits[(j * 8) + k] = (x & 0x80) != 0;
             x <<= 1;
         }
 
