@@ -31,7 +31,7 @@
 #include "tx.h"
 #include "ptt.h"
 #include "dlq.h"
-#include "rrc_fir.h"
+#include "coefs-P700S900.h"
 #include "constellation.h"
 
 extern bool node_shutdown;
@@ -67,7 +67,6 @@ static complex float tx_filter[NTAPS];
 
 static complex float m_txPhase;
 static complex float m_txRect;
-static complex float m_lastSymbol;
 
 static complex float *m_qpsk;
 
@@ -101,15 +100,45 @@ void tx_init(struct audio_s *p_modem)
 
     m_txRect = cmplx((TAU * CENTER) / FS);
     m_txPhase = cmplx(0.0f);
-    
-    m_lastSymbol = CMPLXF(0.0f, 0.0f);
 
     m_qpsk = getQPSKConstellation();
 }
 
-static complex float interpolate(complex float a, complex float b, float x)
+complex float interpolate(complex float a, complex float b, float x)
 {
-    return a + ((b - a) * x / CYCLES);
+    return a + (b - a) * x / (float)RATE;
+}
+
+void resampler(complex float out[], complex float in[], int length)
+{
+    for (int i = 0; i < (length - 1); i++)
+    {
+        for (int j = 0; j < RATE; j++)
+        {
+            out[(i * RATE) + j] = interpolate(in[i], in[i + 1], (float)j);
+        }
+    }
+
+    for (int i = 0; i < RATE; i++)
+    {
+        out[((length - 1) * RATE) + i] = interpolate(in[length - 2], in[length - 1], (float)(i * RATE));
+    }
+}
+
+static void clip(complex float samples[], float thresh, int n)
+{
+    for (int i = 0; i < n; i++)
+    {
+        complex float sam = samples[i];
+        float mag = cabsf(sam);
+
+        if (mag > thresh)
+        {
+            sam *= thresh / mag;
+        }
+
+        samples[i] = sam;
+    }
 }
 
 /*
@@ -119,33 +148,14 @@ void tx_symbol(complex float symbol)
 {
     complex float signal[CYCLES];
 
-#ifdef ZERO_PAD
+    /////////////// THIS ALL NEEDS REWORK ///////////////////
     /*
-     * Input symbol at RS baud
-     *
-     * Upsample to FS by zero padding
+     * Use linear interpolation to change the
+     * sample rate from 1200 to 9600.
      */
-    signal[0] = symbol;
+    resampler(signal, symbols, length);
 
-    for (int i = 1; i < CYCLES; i++)
-    {
-        signal[i] = CMPLXF(0.0f, 0.0f);
-    }
-#else
-    for (int i = 0; i < CYCLES; i++)
-    {
-        signal[i] = interpolate(symbol, m_lastSymbol, (float)i);
-    }
-#endif
-
-    m_lastSymbol = symbol;
-
-#ifdef ZERO_PAD
-    /*
-     * Root Cosine Filter baseband
-     */
-    rrc_fir(tx_filter, signal, CYCLES);
-#endif
+    clip(signal, 1.9f, outputSize);
 
     /*
      * Shift Baseband to Passband
@@ -154,7 +164,7 @@ void tx_symbol(complex float symbol)
     for (int i = 0; i < CYCLES; i++)
     {
         m_txPhase *= m_txRect;
-        signal[i] = (signal[i] * m_txPhase) * 16384.0f; // Factor PCM amplitude
+        signal[i] = (signal[i] * m_txPhase) * 8192.0f; // Factor PCM amplitude
     }
 
     m_txPhase /= cabsf(m_txPhase); // normalize as magnitude can drift
