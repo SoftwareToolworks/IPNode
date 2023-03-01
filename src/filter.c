@@ -30,8 +30,7 @@ void quisk_filt_cfInit(struct quisk_cfFilter * filter, float * coefs, int taps) 
     // be real or complex.
     filter->dCoefs = coefs;
     filter->cpxCoefs = NULL;
-    filter->cSamples = (complex float *)MALLOC(taps * sizeof(complex float));
-    memset(filter->cSamples, 0, taps * sizeof(complex float));
+    filter->cSamples = (complex float *)calloc(taps, sizeof(complex float));
     filter->ptcSamp = filter->cSamples;
     filter->nTaps = taps;
     filter->cBuf = NULL;
@@ -86,8 +85,8 @@ void quisk_cfTune(struct quisk_cfFilter * filter, float freq) {
     if ( ! filter->cpxCoefs)
         filter->cpxCoefs = (complex float *)MALLOC(filter->nTaps * sizeof(complex float));
 
-    tune = 2.0 * M_PI * freq;
-    D = (filter->nTaps - 1.0) / 2.0;
+    tune = TAU * freq;
+    D = (filter->nTaps - 1.0f) / 2.0f;
 
     for (i = 0; i < filter->nTaps; i++) {
         float tval = tune * (i - D);
@@ -116,7 +115,7 @@ void quisk_ccfFilter(complex float * inSamples, complex float * outSamples, int 
 
     for (i = 0; i < count; i++) {
         *filter->ptcSamp = inSamples[i];
-        accum = 0;
+        accum = 0.0f;
         ptSample = filter->ptcSamp;
         ptCoef = filter->cpxCoefs;
 
