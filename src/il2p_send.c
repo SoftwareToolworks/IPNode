@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <complex.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -18,11 +19,12 @@
 #include "tx.h"
 #include "il2p.h"
 #include "audio.h"
+#include "constellation.h"
 
 static int number_of_bits_sent;
 
 /*
- * Send data to modulator
+ * Send byte to modulator MSB first
  */
 static void il2p_send_data(unsigned char *b, int count)
 {
@@ -62,30 +64,29 @@ int il2p_send_frame(packet_t pp)
 
     // Send bits to modulator.
 
-    // il2p_send_pn_preamble(); // experimental
     il2p_send_data(encoded, elen);
 
     return number_of_bits_sent;
 }
 
 /*
- * Send txdelay and txtail to modulator
+ * Send txdelay and txtail symbols to modulator
  */
-void il2p_send_idle(int nbits)
+void il2p_send_idle(int nsymbols)
 {
-    if ((nbits % 2) != 0)
+    if ((nsymbols % 2) != 0)
     {
-        nbits++;  // make it even
+        nsymbols++;  // make it even
     }
 
-    for (int i = 0; i < (nbits / 4); i++)
+    for (int i = 0; i < (nsymbols / 2); i++)
     {
-        put_bit(0); // BPSK lower left quadrant
-        put_bit(0);
-
-        put_bit(1);  // BPSK upper right quadrant
+        put_bit(1); // +BPSK
         put_bit(1);
+
+        put_bit(0); // -BPSK
+        put_bit(0);
     }
 
-    number_of_bits_sent += nbits;
+    number_of_bits_sent += nsymbols;
 }

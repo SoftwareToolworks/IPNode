@@ -53,7 +53,7 @@ void rx_init(struct audio_s *pa)
     }
     else
     {
-        fprintf(stderr, "Fatal: No audio device defined\n");
+        fprintf(stderr, "Fatal: %s(): No audio device defined\n", __func__);
         exit(1);
     }
 }

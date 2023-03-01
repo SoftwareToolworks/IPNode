@@ -53,7 +53,7 @@ static void get_access_to_gpio(const char *path)
 
     if (stat(path, &finfo) < 0)
     {
-        fprintf(stderr, "Fatal: Can't get properties of %s\n", path);
+        fprintf(stderr, "Fatal: %s(): Can't get properties of %s\n", __func__, path);
         exit(1);
     }
 
@@ -65,7 +65,7 @@ static void get_access_to_gpio(const char *path)
 
         if (num_groups < 0)
         {
-            fprintf(stderr, "getgroups() failed to get supplementary groups, errno=%d\n", errno);
+            fprintf(stderr, "%s(): getgroups() failed to get supplementary groups, errno=%d\n", __func__, errno);
             num_groups = 0;
         }
 

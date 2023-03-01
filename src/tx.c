@@ -53,7 +53,6 @@ static void *tx_thread(void *);
 static bool wait_for_clear_channel(int, int, bool);
 static void tx_frames(int, packet_t);
 static int send_one_frame(packet_t);
-static void tx_symbol(complex float);
 
 static pthread_t tx_tid;
 static pthread_mutex_t audio_out_dev_mutex;
@@ -68,6 +67,7 @@ static complex float tx_filter[NTAPS];
 
 static complex float m_txPhase;
 static complex float m_txRect;
+static complex float m_lastSymbol;
 
 static complex float *m_qpsk;
 
@@ -102,16 +102,24 @@ void tx_init(struct audio_s *p_modem)
     m_txRect = cmplx((TAU * CENTER) / FS);
     m_txPhase = cmplx(0.0f);
     
+    m_lastSymbol = CMPLXF(0.0f, 0.0f);
+
     m_qpsk = getQPSKConstellation();
+}
+
+static complex float interpolate(complex float a, complex float b, float x)
+{
+    return a + ((b - a) * x / CYCLES);
 }
 
 /*
  * Modulate and upsample one symbol
  */
-static void tx_symbol(complex float symbol)
+void tx_symbol(complex float symbol)
 {
     complex float signal[CYCLES];
 
+#ifdef ZERO_PAD
     /*
      * Input symbol at RS baud
      *
@@ -121,22 +129,32 @@ static void tx_symbol(complex float symbol)
 
     for (int i = 1; i < CYCLES; i++)
     {
-        signal[i] = 0.0f;
+        signal[i] = CMPLXF(0.0f, 0.0f);
     }
+#else
+    for (int i = 0; i < CYCLES; i++)
+    {
+        signal[i] = interpolate(symbol, m_lastSymbol, (float)i);
+    }
+#endif
 
+    m_lastSymbol = symbol;
+
+#ifdef ZERO_PAD
     /*
-     * Root Cosine Filter
+     * Root Cosine Filter baseband
      */
     rrc_fir(tx_filter, signal, CYCLES);
+#endif
 
     /*
-     * Shift Baseband to Center Frequency
+     * Shift Baseband to Passband
      */
 
     for (int i = 0; i < CYCLES; i++)
     {
         m_txPhase *= m_txRect;
-        signal[i] = (signal[i] * m_txPhase) * 8192.0f; // Factor PCM amplitude
+        signal[i] = (signal[i] * m_txPhase) * 16384.0f; // Factor PCM amplitude
     }
 
     m_txPhase /= cabsf(m_txPhase); // normalize as magnitude can drift
@@ -165,7 +183,7 @@ static void tx_symbol(complex float symbol)
 void put_bit(unsigned char bit)
 {
     if (bit_count == 0) // wait for 2 bits
-    { 
+    {
         save_bit = bit;
         bit_count++;
 

@@ -89,7 +89,7 @@ void il2p_rec_bit(int dbit)
                         F->state = IL2P_SEARCHING;
                     }
                 }
-                else
+                else // corrected == -1
                 {
                     F->state = IL2P_SEARCHING; // Header failed FEC check.
                 }

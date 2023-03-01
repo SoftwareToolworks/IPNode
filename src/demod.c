@@ -220,15 +220,6 @@ void processSymbols(complex float csamples[])
     m_offset_freq = (get_frequency() * RS / TAU); // convert radians to freq at symbol rate
 
     /*
-     * Declare EOF when greater than +/- 58 Hz error
-     */
-    if ((m_offset_freq > (CENTER + 58.0f)) || (m_offset_freq < (CENTER - 58.0f)))
-    {
-        m_offset_freq = 9999.0f; // EOF
-        return;
-    }
-
-    /*
      * Add to the output stream MSB first
      */
     il2p_rec_bit((diBits >> 1) & 0x1);
