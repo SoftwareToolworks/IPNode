@@ -33,7 +33,6 @@
 #include "dlq.h"
 #include "kiss_pt.h"
 #include "kiss_frame.h"
-#include "rrc_fir.h"
 #include "tq.h"
 #include "tx.h"
 #include "ptt.h"
@@ -108,12 +107,6 @@ int main(int argc, char *argv[])
     }
 
     createQPSKConstellation();
-
-    /*
-     * Create an RRC filter using the
-     * Sample Rate, baud, and Alpha
-     */
-    rrc_make(FS, RS, .35f);
 
     /*
      * Create a costas loop
