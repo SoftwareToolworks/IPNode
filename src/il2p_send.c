@@ -21,9 +21,6 @@
 #include "audio.h"
 #include "constellation.h"
 
-extern int m_bit_count;
-extern int m_save_bit;
-
 complex float m_txPhase;
 complex float m_txRect;
 complex float *m_qpsk;
@@ -32,6 +29,9 @@ static complex float *m_tx_symbols;
 static unsigned char *m_tx_bits;
 
 static int m_number_of_bits_sent;
+
+int m_bit_count;
+int m_save_bit;
 
 static complex float interpolate(complex float a, complex float b, float x)
 {
@@ -73,9 +73,8 @@ static void clip(complex float samples[], float thresh, int length)
 /*
  * Modulate and upsample one symbol
  */
-static void put_symbols()
+static void put_symbols(int symbolsCount)
 {
-    int symbolsCount = m_number_of_bits_sent / 2;
     int outputSize = CYCLES * symbolsCount;
 
     complex float signal[outputSize]; // transmit signal
@@ -87,7 +86,8 @@ static void put_symbols()
     resampler(signal, m_tx_symbols, symbolsCount);
 
 /////////////// PUT FILTER HERE and maybe delete clip() /////////////////////////////////
-
+    //quisk_ccfTXFilter(signal, signal, symbolsCount);
+    
     clip(signal, 2.0f, outputSize);
 
     /*
@@ -124,7 +124,17 @@ static void put_frame_bits(int length)
 {
     int symbol_count = 0;
 
-    m_tx_symbols = (complex float *)calloc(length, sizeof(complex float));
+    if (length < 2)
+    {
+        return;
+    }
+    
+    if ((length % 2) != 0)
+    {
+        length--;  // make it even, get rid of odd bit, should never happen
+    }
+
+    m_tx_symbols = (complex float *)calloc((length / 2), sizeof(complex float)); // 2-bits per symbol
 
     for (int i = 0; i < length; i++)
     {
@@ -144,10 +154,9 @@ static void put_frame_bits(int length)
         m_bit_count = 0;
     }
 
-    put_symbols();
+    put_symbols(symbol_count);
 
     free(m_tx_symbols);
-    free(m_tx_bits);
 }
 
 /*
@@ -173,7 +182,7 @@ int il2p_send_frame(packet_t pp)
 
     m_tx_bits = (unsigned char *)calloc(elen, sizeof(unsigned char));
 
-    m_number_of_bits_sent = 0; // incremented in send_bit
+    m_number_of_bits_sent = 0;
 
    /*
     * Send byte to modulator MSB first
@@ -191,25 +200,27 @@ int il2p_send_frame(packet_t pp)
         m_number_of_bits_sent += 8;
     }
 
-    put_frame_bits(m_number_of_bits_sent / 2);
+    put_frame_bits(m_number_of_bits_sent);
+
+    free(m_tx_bits);
 
     return m_number_of_bits_sent;
 }
 
 /*
  * Send txdelay and txtail symbols to modulator
- * It's called for bits, but we synd dibits
+ * It's called for bits, but we send dibits
  */
-void il2p_send_idle(int nbits)
+void il2p_send_idle(int flags)
 {
-    if ((nbits % 2) != 0)
+    if ((flags % 2) != 0)
     {
-        nbits++;  // make it even
+        flags++;  // make it even
     }
 
-    m_tx_bits = (unsigned char *)calloc(nbits * 2, sizeof(unsigned char));
+    m_tx_bits = (unsigned char *)calloc(flags * 2, sizeof(unsigned char));
 
-    for (int i = 0; i < (nbits * 2); i += 4)
+    for (int i = 0; i < (flags * 2); i += 4)
     {
         m_tx_bits[i] = 1;     // +BPSK
         m_tx_bits[i + 1] = 1;
@@ -218,8 +229,10 @@ void il2p_send_idle(int nbits)
         m_tx_bits[i + 3] = 0;
     }
 
-    put_frame_bits(nbits * 2);
+    put_frame_bits(flags * 2);
 
-    m_number_of_bits_sent += nbits;
+    free(m_tx_bits);
+
+    m_number_of_bits_sent += (flags * 2);
 }
 

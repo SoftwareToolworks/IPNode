@@ -12,12 +12,10 @@
 #define NTAPS 129
 
 struct quisk_cfFilter {        // Structure to hold the static data for FIR filters
-    const float *dCoefs;            // real filter coefficients
     complex float *cpxCoefs;   // complex filter coefficients
-    int nBuf;                  // dimension of cBuf
     complex float *cSamples;   // storage for old samples
     complex float *ptcSamp;    // next available position in cSamples
-    complex float *cBuf;       // auxiliary buffer for interpolation
+    int nBuf;                  // dimension of cBuf
 };
 
 void quisk_filt_cfInit(void);

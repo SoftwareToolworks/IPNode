@@ -37,8 +37,9 @@
 extern bool node_shutdown;
 extern complex float m_txPhase;
 extern complex float m_txRect;
-
 extern complex float *m_qpsk;
+extern int m_bit_count;
+extern int m_save_bit;
 
 #define WAIT_TIMEOUT_MS (60 * 1000)
 #define WAIT_CHECK_EVERY_MS 10
@@ -61,9 +62,6 @@ static int send_one_frame(packet_t);
 static pthread_t tx_tid;
 static pthread_mutex_t audio_out_dev_mutex;
 static struct audio_s *save_audio_config_p;
-
-int m_bit_count;
-int m_save_bit;
 
 void tx_init(struct audio_s *p_modem)
 {
@@ -206,8 +204,6 @@ static void *tx_thread(void *arg)
 
 static int send_one_frame(packet_t pp)
 {
-    int ret = 0;
-
     if (ax25_is_null_frame(pp))
     {
         dlq_seize_confirm();
@@ -217,9 +213,7 @@ static int send_one_frame(packet_t pp)
         return 0;
     }
 
-    ret = il2p_send_frame(pp);
-
-    return ret;
+    return il2p_send_frame(pp);
 }
 
 static void tx_frames(int prio, packet_t pp)
@@ -245,10 +239,10 @@ static void tx_frames(int prio, packet_t pp)
      */
     SLEEP_MS(10);
 
-    num_bits += flags;
+    num_bits += (flags * 2);
 
     /*
-     * Send the frame called with
+     * Send the frame
      */
     nb = send_one_frame(pp);
 
@@ -306,7 +300,7 @@ static void tx_frames(int prio, packet_t pp)
     flags = MS_TO_BITS(tx_txtail * 10);
 
     il2p_send_idle(flags);
-    num_bits += flags;
+    num_bits += (flags * 2);
 
     /*
      * Get the souncard pushing

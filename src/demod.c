@@ -150,6 +150,7 @@ void processSymbols(complex float csamples[])
     m_rxPhase /= cabsf(m_rxPhase); // normalize oscillator as magnitude can drift
 
     //rrc_fir(rx_filter, recvBlock, CYCLES);           REPLACE THIS
+    //quisk_ccfRXFilter(recvBlock, recvBlock, CYCLES);
 
     /*
      * Decimate by 4 for TED calculation (two samples per symbol)
