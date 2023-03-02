@@ -2,6 +2,8 @@
  * Copyright (C) 2018 James C. Ahlstrom
  * All rights reserved.
  *
+ * Modified by Software Toolworks
+ * 
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
@@ -16,10 +18,10 @@
 
 extern const float filtP700S900[];
 
-static struct quisk_cfFilter rx_filter;
-static struct quisk_cfFilter tx_filter;
+static struct firFilter rx_filter;
+static struct firFilter tx_filter;
 
-void quisk_filt_cfInit() {
+void filterCreate() {
     tx_filter.cSamples = (complex float *)calloc(NTAPS, sizeof(complex float));
     rx_filter.cSamples = (complex float *)calloc(NTAPS, sizeof(complex float));
 
@@ -29,21 +31,22 @@ void quisk_filt_cfInit() {
     tx_filter.nBuf = 0;
     rx_filter.nBuf = 0;
 
+    // Passband Translated Coefficients
     tx_filter.cpxCoefs = (complex float *)calloc(NTAPS, sizeof(complex float));
     rx_filter.cpxCoefs = (complex float *)calloc(NTAPS, sizeof(complex float));
 
-    float tune = TAU * (CENTER / FS);
-    float D = (NTAPS - 1.0f) / 2.0f;
+    float tune = TAU * (CENTER / FS);      // 2Pi * 0.104166 Hz = @ 0.6544979 per tap
+    int centerTap = (NTAPS - 1) / 2;       // Center filter tap
 
     for (int i = 0; i < NTAPS; i++) {
-        float tval1 = tune * (i - D);
+        float tval1 = tune * (float)(i - centerTap);
         complex float tval2 = cmplx(tval1) * filtP700S900[i];
-        tx_filter.cpxCoefs[i] = tval2; 
-        rx_filter.cpxCoefs[i] = tval2;
+        tx_filter.cpxCoefs[i] = tval2;  // we have the same tx/rx center frequencies
+        rx_filter.cpxCoefs[i] = tval2;  // you could have separate tx/rx frequencies
     }
 }
 
-void quisk_filt_destroy() {
+void filterDestroy() {
     if (rx_filter.cSamples) {
         free(rx_filter.cSamples);
         rx_filter.cSamples = NULL;
@@ -65,7 +68,7 @@ void quisk_filt_destroy() {
     }
 }
 
-void quisk_ccfRXFilter(complex float *inSamples, complex float *outSamples, int count) {
+void rxFilter(complex float *inSamples, complex float *outSamples, int count) {
     complex float *ptSample;
     complex float *ptCoef;
     complex float accum;
@@ -90,7 +93,7 @@ void quisk_ccfRXFilter(complex float *inSamples, complex float *outSamples, int 
     }
 }
 
-void quisk_ccfTXFilter(complex float *inSamples, complex float *outSamples, int count) {
+void txFilter(complex float *inSamples, complex float *outSamples, int count) {
     complex float *ptSample;
     complex float *ptCoef;
     complex float accum;
@@ -114,4 +117,3 @@ void quisk_ccfTXFilter(complex float *inSamples, complex float *outSamples, int 
             tx_filter.ptcSamp = tx_filter.cSamples;
     }
 }
-

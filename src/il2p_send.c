@@ -19,6 +19,7 @@
 #include "tx.h"
 #include "il2p.h"
 #include "audio.h"
+#include "filter.h"
 #include "constellation.h"
 
 complex float m_txPhase;
@@ -86,9 +87,9 @@ static void put_symbols(int symbolsCount)
     resampler(signal, m_tx_symbols, symbolsCount);
 
 /////////////// PUT FILTER HERE and maybe delete clip() /////////////////////////////////
-    //quisk_ccfTXFilter(signal, signal, symbolsCount);
+    txFilter(signal, signal, symbolsCount);
     
-    clip(signal, 2.0f, outputSize);
+    //clip(signal, 2.0f, outputSize);
 
     /*
      * Shift Baseband to Passband

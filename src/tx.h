@@ -21,8 +21,6 @@ extern "C"
 #include "audio.h"
 
     void tx_init(struct audio_s *);
-    void put_bit(unsigned char);
-    void tx_symbol(complex float);
 
 #ifdef __cplusplus
 }

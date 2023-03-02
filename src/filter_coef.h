@@ -3,7 +3,7 @@
  *
  * h = fir1(128, 1600/9600); f=0:1500; w=f*pi/4800; H=freqz(h,1,w);
  * clf; plot(f,20*log10(abs(H))); grid; axis([0 1500 -80 10])
- * save_array_c_header(h,"filtP700S900","coefs.h")
+ * save_array_c_header(h,"filtP700S900","filter_coef.h")
  */
 
 const float filtP700S900[] = {

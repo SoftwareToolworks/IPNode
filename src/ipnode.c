@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    quisk_filt_cfInit();
+    filterCreate();
     createQPSKConstellation();
 
     /*
@@ -125,10 +125,9 @@ int main(int argc, char *argv[])
     dlq_init();
     ax25_link_init(&misc_config);
     il2p_init();
-    tx_init(&audio_config);
-    //rx_init(&audio_config);    // also inits demod and TED
-
     // ptt_init(&audio_config);          ///////////// disabled for debugging
+    tx_init(&audio_config);
+    rx_init(&audio_config);    // also inits demod and TED
 
     kisspt_init();                    // kiss pseudo-terminal
     kiss_frame_init(&audio_config);   // normal kiss
@@ -137,7 +136,7 @@ int main(int argc, char *argv[])
 
     rx_process();
 
-    quisk_filt_destroy();
+    filterDestroy();
 
     exit(EXIT_SUCCESS);
 }

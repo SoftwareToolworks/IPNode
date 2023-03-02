@@ -86,15 +86,57 @@ void tx_init(struct audio_s *p_modem)
         exit(1);
     }
 
+    // Dibit control variables
     m_bit_count = 0;
     m_save_bit = 0;
 
-    // Center Frequency is 1000 Hz
+    // Passband Center Frequency is 1000 Hz
 
     m_txRect = cmplx((TAU * CENTER) / FS);
     m_txPhase = cmplx(0.0f);
 
     m_qpsk = getQPSKConstellation();
+}
+
+static void *tx_thread(void *arg)
+{
+    while (node_shutdown == false)
+    {
+
+        tq_wait_while_empty();
+
+        while (tq_peek(TQ_PRIO_0_HI) != NULL || tq_peek(TQ_PRIO_1_LO) != NULL)
+        {
+            bool ok = wait_for_clear_channel(tx_slottime, tx_persist, tx_fulldup);
+
+            int prio = TQ_PRIO_1_LO;
+            packet_t pp = tq_remove(TQ_PRIO_0_HI);
+
+            if (pp != NULL)
+            {
+                prio = TQ_PRIO_0_HI;
+            }
+            else
+            {
+                pp = tq_remove(TQ_PRIO_1_LO);
+            }
+
+            if (pp != NULL)
+            {
+                if (ok == true)
+                {
+                    tx_frames(prio, pp);
+                    il2p_mutex_unlock(&audio_out_dev_mutex);
+                }
+                else
+                {
+                    ax25_delete(pp);
+                }
+            }
+        }
+    }
+
+    return 0;
 }
 
 static bool wait_for_clear_channel(int slottime, int persist, bool fulldup)
@@ -159,47 +201,6 @@ static bool wait_for_clear_channel(int slottime, int persist, bool fulldup)
     }
 
     return true;
-}
-
-static void *tx_thread(void *arg)
-{
-    while (node_shutdown == false)
-    {
-
-        tq_wait_while_empty();
-
-        while (tq_peek(TQ_PRIO_0_HI) != NULL || tq_peek(TQ_PRIO_1_LO) != NULL)
-        {
-            bool ok = wait_for_clear_channel(tx_slottime, tx_persist, tx_fulldup);
-
-            int prio = TQ_PRIO_1_LO;
-            packet_t pp = tq_remove(TQ_PRIO_0_HI);
-
-            if (pp != NULL)
-            {
-                prio = TQ_PRIO_0_HI;
-            }
-            else
-            {
-                pp = tq_remove(TQ_PRIO_1_LO);
-            }
-
-            if (pp != NULL)
-            {
-                if (ok == true)
-                {
-                    tx_frames(prio, pp);
-                    il2p_mutex_unlock(&audio_out_dev_mutex);
-                }
-                else
-                {
-                    ax25_delete(pp);
-                }
-            }
-        }
-    }
-
-    return 0;
 }
 
 static int send_one_frame(packet_t pp)
