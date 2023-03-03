@@ -41,7 +41,7 @@ extern "C"
 /*
  * Idle Flag
  */
-#define FLAG 0xCC
+#define FLAG 0x33
 
 /*
  * This method is much faster than using cexp()

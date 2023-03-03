@@ -29,6 +29,20 @@ complex float m_txRect;
 complex float *m_qpsk;
 
 /*
+ * Built-in multiply is slow because of
+ * all the internal checking.
+ * 
+ * Skip all the checking during tight loops...
+ */
+static complex float fast_multiply(complex float a, complex float b)
+{
+    float ii = crealf(a) * crealf(b) - cimagf(a) * cimagf(b);
+    float qq = crealf(a) * cimagf(b) + crealf(b) * cimagf(a);
+
+    return CMPLXF(ii, qq); 
+}
+
+/*
  * Modulate and upsample symbols
  */
 static void put_symbols(complex float symbols[], int symbolsCount)
@@ -53,7 +67,9 @@ static void put_symbols(complex float symbols[], int symbolsCount)
         }
     }
 
-    //clip(signal, 1.9f, outputSize);
+#ifdef CLIP
+    clip(signal, 1.9f, outputSize);
+#endif
 
     /*
      * Root Cosine Filter baseband
@@ -63,25 +79,22 @@ static void put_symbols(complex float symbols[], int symbolsCount)
     /*
      * Shift Baseband to Passband
      */
-
     for (int i = 0; i < outputSize; i++)
     {
-        m_txPhase *= m_txRect;
-        signal[i] = (signal[i] * m_txPhase) * 16384.0f; // Factor PCM amplitude
+        m_txPhase = fast_multiply(m_txPhase, m_txRect);
+        signal[i] = fast_multiply(signal[i], m_txPhase) * 65535.0f; // Factor PCM amplitude
     }
-
-    m_txPhase /= cabsf(m_txPhase); // normalize as magnitude can drift
 
     /*
      * Store PCM I and Q in audio output buffer
      */
     for (int i = 0; i < outputSize; i++)
     {
-        signed short pcm = (signed short)(crealf(signal[i])); // I
+        short pcm = (short)(crealf(signal[i])); // I
         audio_put(pcm & 0xff);
         audio_put((pcm >> 8) & 0xff);
 
-        pcm = (signed short)(cimagf(signal[i])); // Q
+        pcm = (short)(cimagf(signal[i])); // Q
         audio_put(pcm & 0xff);
         audio_put((pcm >> 8) & 0xff);
     }

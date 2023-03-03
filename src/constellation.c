@@ -16,10 +16,10 @@ static complex float d_qpsk[4];
 void createQPSKConstellation()
 {
     // Gray-coded
-    d_qpsk[0] = CMPLXF(-SQRT2, -SQRT2);
-    d_qpsk[1] = CMPLXF(SQRT2, -SQRT2);
-    d_qpsk[2] = CMPLXF(-SQRT2, SQRT2);
-    d_qpsk[3] = CMPLXF(SQRT2, SQRT2);
+    d_qpsk[0] = CMPLXF(1.0f, 0.0f);
+    d_qpsk[1] = CMPLXF(0.0f, 1.0f);
+    d_qpsk[2] = CMPLXF(0.0f, -1.0f);
+    d_qpsk[3] = CMPLXF(-1.0f, 0.0f);
 }
 
 complex float *getQPSKConstellation()

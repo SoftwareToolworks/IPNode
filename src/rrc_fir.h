@@ -15,8 +15,8 @@ extern "C"
 
 #include <complex.h>
 
-#define NTAPS 127 // lower bauds need more taps
-#define GAIN 1.85
+#define NTAPS 65 // lower bauds need more taps
+#define GAIN 1.2
 
     void rrc_fir(complex float *, complex float *, int);
     void rrc_make(float, float, float);

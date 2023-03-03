@@ -112,7 +112,7 @@ bool demod_get_samples(complex float csamples[])
 
         pcm_Q = (msb << 8) | lsb;
 
-        csamples[i] = CMPLXF((float) pcm_I, (float) pcm_Q) / 16384.0;
+        csamples[i] = CMPLXF((float) pcm_I, (float) pcm_Q) / 32768.0;
     }
 
     return true;
@@ -147,8 +147,6 @@ void processSymbols(complex float csamples[])
 
         recvBlock[i] = csamples[i] * m_rxPhase;
     }
-
-    m_rxPhase /= cabsf(m_rxPhase); // normalize oscillator as magnitude can drift
 
     rrc_fir(rx_filter, recvBlock, CYCLES);
 
