@@ -19,49 +19,14 @@
 #include "tx.h"
 #include "il2p.h"
 #include "audio.h"
-#include "filter.h"
+#include "rrc_fir.h"
 #include "constellation.h"
+
+static complex float tx_filter[NTAPS];
 
 complex float m_txPhase;
 complex float m_txRect;
 complex float *m_qpsk;
-
-static complex float interpolate(complex float a, complex float b, float x)
-{
-    return a + (b - a) * x / (float)CYCLES;
-}
-
-static void resampler(complex float out[], complex float in[], int length)
-{
-    for (int i = 0; i < (length - 1); i++)
-    {
-        for (int j = 0; j < CYCLES; j++)
-        {
-            out[(i * CYCLES) + j] = interpolate(in[i], in[i + 1], (float)j);
-        }
-    }
-
-    for (int i = 0; i < CYCLES; i++)
-    {
-        out[((length - 1) * CYCLES) + i] = interpolate(in[length - 2], in[length - 1], (float)(i * CYCLES));
-    }
-}
-
-static void clip(complex float samples[], float thresh, int length)
-{
-    for (int i = 0; i < length; i++)
-    {
-        complex float sam = samples[i];
-        float mag = cabsf(sam);
-
-        if (mag > thresh)
-        {
-            sam *= thresh / mag;
-        }
-
-        samples[i] = sam;
-    }
-}
 
 /*
  * Modulate and upsample symbols
@@ -73,14 +38,27 @@ static void put_symbols(complex float symbols[], int symbolsCount)
     complex float signal[outputSize]; // transmit signal
 
     /*
-     * Use linear interpolation to change the
+     * Use zero-insertion to change the
      * sample rate from 1200 to 9600.
      */
-    resampler(signal, symbols, symbolsCount);
+    for (int i = 0; i < symbolsCount; i++)
+    {
+        int index = (i * CYCLES); // compute once
 
-    txFilter(signal, signal, symbolsCount);
-    
-    clip(signal, 2.0f, outputSize);
+        signal[index] = symbols[i];
+
+        for (int j = 1; j < CYCLES; j++)
+        {
+            signal[index + j] = CMPLXF(0.0f, 0.0f);
+        }
+    }
+
+    //clip(signal, 1.9f, outputSize);
+
+    /*
+     * Root Cosine Filter baseband
+     */
+    rrc_fir(tx_filter, signal, outputSize);
 
     /*
      * Shift Baseband to Passband
@@ -89,7 +67,7 @@ static void put_symbols(complex float symbols[], int symbolsCount)
     for (int i = 0; i < outputSize; i++)
     {
         m_txPhase *= m_txRect;
-        signal[i] = (signal[i] * m_txPhase) * 8192.0f; // Factor PCM amplitude
+        signal[i] = (signal[i] * m_txPhase) * 16384.0f; // Factor PCM amplitude
     }
 
     m_txPhase /= cabsf(m_txPhase); // normalize as magnitude can drift
@@ -112,20 +90,20 @@ static void put_symbols(complex float symbols[], int symbolsCount)
 /*
  * Transmit octets
  */
-static void put_frame_bits(unsigned char tx_bits[], int length)
+static void put_frame_bits(unsigned char tx_bits[], int num_bits)
 {
     int symbol_count = 0;
     int bit_count = 0;
     int save_bit;
 
-    complex float tx_symbols[length / 2];  // 2-Bits per symbol
+    complex float tx_symbols[num_bits / 2];  // 2-Bits per symbol
 
-    for (int i = 0; i < (length / 2); i++)
+    for (int i = 0; i < (num_bits / 2); i++)
     {
         tx_symbols[i] = CMPLXF(0.0f, 0.0f);
     }
 
-    for (int i = 0; i < length; i++)
+    for (int i = 0; i < num_bits; i++)
     {
         if (bit_count == 0) // wait for 2 bits
         {
@@ -199,15 +177,15 @@ int il2p_send_frame(packet_t pp)
 
 /*
  * Send txdelay and txtail symbols to modulator
- * Send a flag which is 11001100 (0xCC) pattern
+ * Send flags which is 11001100 (0xCC) pattern
  */
-void il2p_send_idle(int flags)
+void il2p_send_idle(int num_flags)
 {
     int number_of_bits = 0;
 
-    unsigned char tx_bits[flags * 8];
+    unsigned char tx_bits[num_flags * 8];
 
-    for (int i = 0; i < (flags * 8); i++)
+    for (int i = 0; i < (num_flags * 8); i++)
     {
         tx_bits[i] = 0U;
     }
@@ -215,7 +193,7 @@ void il2p_send_idle(int flags)
     /*
      * Send byte to modulator MSB first
      */
-    for (int i = 0; i < flags; i++)
+    for (int i = 0; i < num_flags; i++)
     {
         unsigned char x = FLAG;
 

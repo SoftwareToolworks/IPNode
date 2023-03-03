@@ -30,7 +30,7 @@
 #include "rx.h"
 #include "il2p.h"
 #include "costas_loop.h"
-#include "filter.h"
+#include "rrc_fir.h"
 #include "ptt.h"
 #include "constellation.h"
 #include "timing_error_detector.h"
@@ -40,6 +40,7 @@
 static struct audio_s *save_audio_config_p;
 static struct demodulator_state_s demodulator_state;
 
+static complex float rx_filter[NTAPS];
 static complex float m_rxPhase;
 static complex float m_rxRect;
 static complex float recvBlock[8]; // 8 CYCLES per symbol
@@ -149,8 +150,7 @@ void processSymbols(complex float csamples[])
 
     m_rxPhase /= cabsf(m_rxPhase); // normalize oscillator as magnitude can drift
 
-    //rrc_fir(rx_filter, recvBlock, CYCLES);           REPLACE THIS
-    //quisk_ccfRXFilter(recvBlock, recvBlock, CYCLES);
+    rrc_fir(rx_filter, recvBlock, CYCLES);
 
     /*
      * Decimate by 4 for TED calculation (two samples per symbol)

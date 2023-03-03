@@ -41,15 +41,15 @@ extern complex float *m_qpsk;
 #define WAIT_TIMEOUT_MS (60 * 1000)
 #define WAIT_CHECK_EVERY_MS 10
 
+static int tx_bits_per_sec;
 static int tx_slottime;
 static int tx_persist;
 static int tx_txdelay;
 static int tx_txtail;
 static bool tx_fulldup;
-static int tx_bits_per_sec;
 
-#define BITS_TO_MS(b) (((b)*1000) / tx_bits_per_sec)
-#define MS_TO_BITS(ms) (((ms)*tx_bits_per_sec) / 1000)
+#define BITS_TO_MS(b) (((b) * 1000) / tx_bits_per_sec)
+#define MS_TO_BITS(ms) (((ms) * tx_bits_per_sec) / 1000)   // 100 ms == 240 bits
 
 static void *tx_thread(void *);
 static bool wait_for_clear_channel(int, int, bool);
@@ -69,7 +69,7 @@ void tx_init(struct audio_s *p_modem)
     tx_txdelay = p_modem->txdelay;
     tx_txtail = p_modem->txtail;
     tx_fulldup = p_modem->fulldup;
-    tx_bits_per_sec = p_modem->baud * 2;
+    tx_bits_per_sec = 2400;
 
     tq_init(p_modem);
 
@@ -215,7 +215,6 @@ static void tx_frames(int prio, packet_t pp)
     int numframe = 0;
     int num_bits = 0;
     int nb;
-    int flags;
     bool done;
 
     double time_ptt = dtime_now();
@@ -224,16 +223,15 @@ static void tx_frames(int prio, packet_t pp)
 
     dlq_seize_confirm();
 
-    flags = MS_TO_BITS(tx_txdelay * 10);
+    int flags = MS_TO_BITS(tx_txdelay * 10) / 8; // bits to bytes
 
     il2p_send_idle(flags);
+    num_bits += (flags * 8);
 
     /*
      * Give other threads some time
      */
     SLEEP_MS(10);
-
-    num_bits += (flags * 2);
 
     /*
      * Send the frame
@@ -291,10 +289,10 @@ static void tx_frames(int prio, packet_t pp)
     /*
      * Now send the tx_tail
      */
-    flags = MS_TO_BITS(tx_txtail * 10);
+    flags = MS_TO_BITS(tx_txtail * 10) / 8; // bits to bytes
 
     il2p_send_idle(flags);
-    num_bits += (flags * 2);
+    num_bits += (flags * 8);
 
     /*
      * Get the souncard pushing

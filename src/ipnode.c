@@ -42,7 +42,7 @@
 #include "il2p.h"
 #include "costas_loop.h"
 #include "constellation.h"
-#include "filter.h"
+#include "rrc_fir.h"
 
 extern bool node_shutdown;
 
@@ -95,9 +95,6 @@ int main(int argc, char *argv[])
     /*
      * Open the audio source
      */
-
-    audio_config.baud = RS;
-
     int err = audio_open(&audio_config);
 
     if (err < 0)
@@ -107,8 +104,13 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    filterCreate();
     createQPSKConstellation();
+
+    /*
+     * Create an RRC filter using the
+     * Sample Rate, Baud, and Alpha
+     */
+    rrc_make(FS, RS, .35f);
 
     /*
      * Create a costas loop
@@ -135,8 +137,6 @@ int main(int argc, char *argv[])
     // Run daemon process forever
 
     rx_process();
-
-    filterDestroy();
 
     exit(EXIT_SUCCESS);
 }

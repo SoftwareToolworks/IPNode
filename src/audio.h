@@ -50,7 +50,6 @@ extern "C"
     struct audio_s
     {
         bool defined;
-        float baud;
         int dwait;
         int slottime;
         int persist;

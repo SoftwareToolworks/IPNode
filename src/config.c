@@ -213,7 +213,6 @@ void config_init(char *fname, struct audio_s *p_audio_config, struct misc_config
     strlcpy(p_audio_config->adevice_out, DEFAULT_ADEVICE, sizeof(p_audio_config->adevice_out));
 
     p_audio_config->defined = false;
-    p_audio_config->baud = RS;
 
     for (int ot = 0; ot < NUM_OCTYPES; ot++)
     {
