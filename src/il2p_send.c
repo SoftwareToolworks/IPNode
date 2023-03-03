@@ -26,14 +26,6 @@ complex float m_txPhase;
 complex float m_txRect;
 complex float *m_qpsk;
 
-static complex float *m_tx_symbols;
-static unsigned char *m_tx_bits;
-
-static int m_number_of_bits_sent;
-
-int m_bit_count;
-int m_save_bit;
-
 static complex float interpolate(complex float a, complex float b, float x)
 {
     return a + (b - a) * x / (float)CYCLES;
@@ -72,11 +64,11 @@ static void clip(complex float samples[], float thresh, int length)
 }
 
 /*
- * Modulate and upsample one symbol
+ * Modulate and upsample symbols
  */
-static void put_symbols(int symbolsCount)
+static void put_symbols(complex float symbols[], int symbolsCount)
 {
-    int outputSize = CYCLES * symbolsCount;
+    int outputSize = CYCLES * symbolsCount; // upsample 1200 to 9600
 
     complex float signal[outputSize]; // transmit signal
 
@@ -84,12 +76,11 @@ static void put_symbols(int symbolsCount)
      * Use linear interpolation to change the
      * sample rate from 1200 to 9600.
      */
-    resampler(signal, m_tx_symbols, symbolsCount);
+    resampler(signal, symbols, symbolsCount);
 
-/////////////// PUT FILTER HERE and maybe delete clip() /////////////////////////////////
     txFilter(signal, signal, symbolsCount);
     
-    //clip(signal, 2.0f, outputSize);
+    clip(signal, 2.0f, outputSize);
 
     /*
      * Shift Baseband to Passband
@@ -119,45 +110,40 @@ static void put_symbols(int symbolsCount)
 }
 
 /*
- * Transmit bits
+ * Transmit octets
  */
-static void put_frame_bits(int length)
+static void put_frame_bits(unsigned char tx_bits[], int length)
 {
     int symbol_count = 0;
+    int bit_count = 0;
+    int save_bit;
 
-    if (length < 2)
-    {
-        return;
-    }
-    
-    if ((length % 2) != 0)
-    {
-        length--;  // make it even, get rid of odd bit, should never happen
-    }
+    complex float tx_symbols[length / 2];  // 2-Bits per symbol
 
-    m_tx_symbols = (complex float *)calloc((length / 2), sizeof(complex float)); // 2-bits per symbol
+    for (int i = 0; i < (length / 2); i++)
+    {
+        tx_symbols[i] = CMPLXF(0.0f, 0.0f);
+    }
 
     for (int i = 0; i < length; i++)
     {
-        if (m_bit_count == 0) // wait for 2 bits
+        if (bit_count == 0) // wait for 2 bits
         {
-            m_save_bit = m_tx_bits[i];
-            m_bit_count++;
+            save_bit = tx_bits[i];
+            bit_count++;
 
             continue;
         }
 
-        unsigned char dibit = (m_save_bit << 1) | m_tx_bits[i];
+        unsigned char dibit = (save_bit << 1) | tx_bits[i];
 
-        m_tx_symbols[symbol_count++] = getQPSKQuadrant(dibit);
+        tx_symbols[symbol_count++] = getQPSKQuadrant(dibit);
 
-        m_save_bit = 0; // reset for next bits
-        m_bit_count = 0;
+        save_bit = 0; // reset for next bits
+        bit_count = 0;
     }
 
-    put_symbols(symbol_count);
-
-    free(m_tx_symbols);
+    put_symbols(tx_symbols, symbol_count);
 }
 
 /*
@@ -181,59 +167,67 @@ int il2p_send_frame(packet_t pp)
 
     elen += IL2P_SYNC_WORD_SIZE;
 
-    m_tx_bits = (unsigned char *)calloc(elen, sizeof(unsigned char));
+    unsigned char tx_bits[elen * 8];
 
-    m_number_of_bits_sent = 0;
+    for (int i = 0; i < (elen * 8); i++)
+    {
+        tx_bits[i] = 0U;
+    }
 
-   /*
-    * Send byte to modulator MSB first
-    */
+    int number_of_bits = 0;
+
+    /*
+     * Send byte to modulator MSB first
+     */
     for (int j = 0; j < elen; j++)
     {
         unsigned char x = encoded[j];
 
         for (int k = 0; k < 8; k++)
         {
-            m_tx_bits[(j * 8) + k] = (x & 0x80) != 0;
+            tx_bits[(j * 8) + k] = (x & 0x80) != 0;
             x <<= 1;
         }
 
-        m_number_of_bits_sent += 8;
+        number_of_bits += 8;
     }
 
-    put_frame_bits(m_number_of_bits_sent);
+    put_frame_bits(tx_bits, number_of_bits);
 
-    free(m_tx_bits);
-
-    return m_number_of_bits_sent;
+    return number_of_bits;
 }
 
 /*
  * Send txdelay and txtail symbols to modulator
- * It's called for bits, but we send dibits
+ * Send a flag which is 11001100 (0xCC) pattern
  */
 void il2p_send_idle(int flags)
 {
-    if ((flags % 2) != 0)
+    int number_of_bits = 0;
+
+    unsigned char tx_bits[flags * 8];
+
+    for (int i = 0; i < (flags * 8); i++)
     {
-        flags++;  // make it even
+        tx_bits[i] = 0U;
     }
 
-    m_tx_bits = (unsigned char *)calloc(flags * 2, sizeof(unsigned char));
-
-    for (int i = 0; i < (flags * 2); i += 4)
+    /*
+     * Send byte to modulator MSB first
+     */
+    for (int i = 0; i < flags; i++)
     {
-        m_tx_bits[i] = 1;     // +BPSK
-        m_tx_bits[i + 1] = 1;
+        unsigned char x = FLAG;
 
-        m_tx_bits[i + 2] = 0; // -BPSK
-        m_tx_bits[i + 3] = 0;
+        for (int j = 0; j < 8; j++)
+        {
+            tx_bits[(i * 8) + j] = (x & 0x80) != 0;
+            x <<= 1;
+        }
+
+        number_of_bits += 8;
     }
 
-    put_frame_bits(flags * 2);
-
-    free(m_tx_bits);
-
-    m_number_of_bits_sent += (flags * 2);
+    put_frame_bits(tx_bits, number_of_bits);
 }
 

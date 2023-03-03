@@ -31,15 +31,12 @@
 #include "tx.h"
 #include "ptt.h"
 #include "dlq.h"
-#include "filter.h"
 #include "constellation.h"
 
 extern bool node_shutdown;
 extern complex float m_txPhase;
 extern complex float m_txRect;
 extern complex float *m_qpsk;
-extern int m_bit_count;
-extern int m_save_bit;
 
 #define WAIT_TIMEOUT_MS (60 * 1000)
 #define WAIT_CHECK_EVERY_MS 10
@@ -85,10 +82,6 @@ void tx_init(struct audio_s *p_modem)
         fprintf(stderr, "Fatal: Could not create transmitter thread for modem\n");
         exit(1);
     }
-
-    // Dibit control variables
-    m_bit_count = 0;
-    m_save_bit = 0;
 
     // Passband Center Frequency is 1000 Hz
 

@@ -39,6 +39,11 @@ extern "C"
 #define CYCLES (int)(FS/RS)
 
 /*
+ * Idle Flag
+ */
+#define FLAG 0xCC
+
+/*
  * This method is much faster than using cexp()
  * float_value - must be a float
  */
