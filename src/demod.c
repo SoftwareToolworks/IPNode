@@ -9,8 +9,6 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#define _POSIX_C_SOURCE 200112L
-
 // Includes
 
 #include <stdlib.h>

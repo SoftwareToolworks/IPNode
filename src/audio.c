@@ -9,8 +9,6 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#define _DEFAULT_SOURCE
-
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>

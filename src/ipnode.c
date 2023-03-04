@@ -9,8 +9,6 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#define _DEFAULT_SOURCE
-
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
@@ -44,7 +42,7 @@
 #include "constellation.h"
 #include "rrc_fir.h"
 
-extern bool node_shutdown;
+bool node_shutdown;
 
 #define IS_DIR_SEPARATOR(c) ((c) == '/')
 

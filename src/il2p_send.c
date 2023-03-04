@@ -22,121 +22,6 @@
 #include "rrc_fir.h"
 #include "constellation.h"
 
-static complex float tx_filter[NTAPS];
-
-complex float m_txPhase;
-complex float m_txRect;
-complex float *m_qpsk;
-
-/*
- * Built-in multiply is slow because of
- * all the internal checking.
- * 
- * Skip all the checking during tight loops...
- */
-static complex float fast_multiply(complex float a, complex float b)
-{
-    float ii = crealf(a) * crealf(b) - cimagf(a) * cimagf(b);
-    float qq = crealf(a) * cimagf(b) + crealf(b) * cimagf(a);
-
-    return CMPLXF(ii, qq); 
-}
-
-/*
- * Modulate and upsample symbols
- */
-static void put_symbols(complex float symbols[], int symbolsCount)
-{
-    int outputSize = CYCLES * symbolsCount; // upsample 1200 to 9600
-
-    complex float signal[outputSize]; // transmit signal
-
-    /*
-     * Use zero-insertion to change the
-     * sample rate from 1200 to 9600.
-     */
-    for (int i = 0; i < symbolsCount; i++)
-    {
-        int index = (i * CYCLES); // compute once
-
-        signal[index] = symbols[i];
-
-        for (int j = 1; j < CYCLES; j++)
-        {
-            signal[index + j] = CMPLXF(0.0f, 0.0f);
-        }
-    }
-
-#ifdef CLIP
-    clip(signal, 1.9f, outputSize);
-#endif
-
-    /*
-     * Root Cosine Filter baseband
-     */
-    rrc_fir(tx_filter, signal, outputSize);
-
-    /*
-     * Shift Baseband to Passband
-     */
-    for (int i = 0; i < outputSize; i++)
-    {
-        m_txPhase = fast_multiply(m_txPhase, m_txRect);
-        signal[i] = fast_multiply(signal[i], m_txPhase) * 65535.0f; // Factor PCM amplitude
-    }
-
-    /*
-     * Store PCM I and Q in audio output buffer
-     */
-    for (int i = 0; i < outputSize; i++)
-    {
-        short pcm = (short)(crealf(signal[i])); // I
-        audio_put(pcm & 0xff);
-        audio_put((pcm >> 8) & 0xff);
-
-        pcm = (short)(cimagf(signal[i])); // Q
-        audio_put(pcm & 0xff);
-        audio_put((pcm >> 8) & 0xff);
-    }
-}
-
-/*
- * Transmit octets
- */
-static void put_frame_bits(unsigned char tx_bits[], int num_bits)
-{
-    int symbol_count = 0;
-    int bit_count = 0;
-    int save_bit;
-
-    complex float tx_symbols[num_bits / 2];  // 2-Bits per symbol
-
-    for (int i = 0; i < (num_bits / 2); i++)
-    {
-        tx_symbols[i] = CMPLXF(0.0f, 0.0f);
-    }
-
-    for (int i = 0; i < num_bits; i++)
-    {
-        if (bit_count == 0) // wait for 2 bits
-        {
-            save_bit = tx_bits[i];
-            bit_count++;
-
-            continue;
-        }
-
-        unsigned char dibit = (save_bit << 1) | tx_bits[i];
-
-        tx_symbols[symbol_count++] = getQPSKQuadrant(dibit);
-
-        save_bit = 0; // reset for next bits
-        bit_count = 0;
-    }
-
-    put_symbols(tx_symbols, symbol_count);
-}
-
 /*
  * Transmit bits are stored in tx_bits array
  */
@@ -183,20 +68,20 @@ int il2p_send_frame(packet_t pp)
         number_of_bits += 8;
     }
 
-    put_frame_bits(tx_bits, number_of_bits);
+    tx_frame_bits(tx_bits, number_of_bits);
 
     return number_of_bits;
 }
 
 /*
  * Send txdelay and txtail symbols to modulator
- * Send flags which is 11001100 (0xCC) pattern
+ * Send flags which is 00110011 (0x33) pattern
  */
 void il2p_send_idle(int num_flags)
 {
     int number_of_bits = 0;
 
-    unsigned char tx_bits[num_flags * 8];
+    unsigned char tx_bits[num_flags * 8];  // one flag is 8-Bits
 
     for (int i = 0; i < (num_flags * 8); i++)
     {
@@ -219,6 +104,6 @@ void il2p_send_idle(int num_flags)
         number_of_bits += 8;
     }
 
-    put_frame_bits(tx_bits, number_of_bits);
+    tx_frame_bits(tx_bits, number_of_bits);
 }
 

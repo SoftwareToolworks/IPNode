@@ -25,12 +25,12 @@
 #include "ax25_link.h"
 #include "timing_error_detector.h"
 
+extern bool node_shutdown;
+
 static pthread_t xmit_tid;
 
 static void *rx_adev_thread(void *arg);
 static struct audio_s *save_pa; /* Keep pointer to audio configuration */
-
-bool node_shutdown;
 
 void rx_init(struct audio_s *pa)
 {
@@ -48,8 +48,6 @@ void rx_init(struct audio_s *pa)
 
         create_timing_error_detector();
         demod_init(pa);
-
-        node_shutdown = false;
     }
     else
     {

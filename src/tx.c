@@ -9,8 +9,6 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#define _DEFAULT_SOURCE
-
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -31,12 +29,10 @@
 #include "tx.h"
 #include "ptt.h"
 #include "dlq.h"
+#include "rrc_fir.h"
 #include "constellation.h"
 
 extern bool node_shutdown;
-extern complex float m_txPhase;
-extern complex float m_txRect;
-extern complex float *m_qpsk;
 
 #define WAIT_TIMEOUT_MS (60 * 1000)
 #define WAIT_CHECK_EVERY_MS 10
@@ -59,6 +55,26 @@ static int send_one_frame(packet_t);
 static pthread_t tx_tid;
 static pthread_mutex_t audio_out_dev_mutex;
 static struct audio_s *save_audio_config_p;
+
+static complex float tx_filter[NTAPS];
+
+static complex float m_txPhase;
+static complex float m_txRect;
+static complex float *m_qpsk;
+
+/*
+ * Built-in complex multiply is slow because of
+ * all the internal checking.
+ * 
+ * Skip all the checking during tight loops...
+ */
+static complex float fast_multiply(complex float a, complex float b)
+{
+    float ii = crealf(a) * crealf(b) - cimagf(a) * cimagf(b);
+    float qq = crealf(a) * cimagf(b) + crealf(b) * cimagf(a);
+
+    return CMPLXF(ii, qq); 
+}
 
 void tx_init(struct audio_s *p_modem)
 {
@@ -130,6 +146,102 @@ static void *tx_thread(void *arg)
     }
 
     return 0;
+}
+
+/*
+ * Modulate and upsample symbols
+ * Sending them to the soundcard
+ */
+static void put_symbols(complex float symbols[], int symbolsCount)
+{
+    int outputSize = CYCLES * symbolsCount; // upsample 1200 to 9600
+
+    complex float signal[outputSize]; // transmit signal
+
+    /*
+     * Use zero-insertion to change the
+     * sample rate from 1200 to 9600.
+     */
+    for (int i = 0; i < symbolsCount; i++)
+    {
+        int index = (i * CYCLES); // compute once
+
+        signal[index] = symbols[i];
+
+        for (int j = 1; j < CYCLES; j++)
+        {
+            signal[index + j] = CMPLXF(0.0f, 0.0f);
+        }
+    }
+
+#ifdef CLIP
+    clip(signal, 1.9f, outputSize);
+#endif
+
+    /*
+     * Root Cosine Filter baseband
+     */
+    rrc_fir(tx_filter, signal, outputSize);
+
+    /*
+     * Shift Baseband to Passband
+     */
+    for (int i = 0; i < outputSize; i++)
+    {
+        m_txPhase = fast_multiply(m_txPhase, m_txRect);
+        signal[i] = fast_multiply(signal[i], m_txPhase) * 16384.0f; // Factor PCM amplitude
+    }
+
+    /*
+     * Store PCM I and Q in audio output buffer
+     */
+    for (int i = 0; i < outputSize; i++)
+    {
+        short pcm = (short)(crealf(signal[i])); // I
+        audio_put(pcm & 0xff);                  // little-endian
+        audio_put((pcm >> 8) & 0xff);
+
+        pcm = (short)(cimagf(signal[i])); // Q
+        audio_put(pcm & 0xff);
+        audio_put((pcm >> 8) & 0xff);
+    }
+}
+
+/*
+ * Transmit octets
+ */
+void tx_frame_bits(unsigned char tx_bits[], int num_bits)
+{
+    int symbol_count = 0;
+    int bit_count = 0;
+    int save_bit;
+
+    complex float tx_symbols[num_bits / 2];  // 2-Bits per symbol
+
+    for (int i = 0; i < (num_bits / 2); i++)
+    {
+        tx_symbols[i] = CMPLXF(0.0f, 0.0f);
+    }
+
+    for (int i = 0; i < num_bits; i++)
+    {
+        if (bit_count == 0) // wait for 2 bits
+        {
+            save_bit = tx_bits[i];
+            bit_count++;
+
+            continue;
+        }
+
+        unsigned char dibit = ((save_bit << 1) | tx_bits[i]) & 0x3;
+
+        tx_symbols[symbol_count++] = getQPSKQuadrant(dibit);
+
+        save_bit = 0; // reset for next bits
+        bit_count = 0;
+    }
+
+    put_symbols(tx_symbols, symbol_count);
 }
 
 static bool wait_for_clear_channel(int slottime, int persist, bool fulldup)
@@ -223,10 +335,12 @@ static void tx_frames(int prio, packet_t pp)
 
     dlq_seize_confirm();
 
-    int flags = MS_TO_BITS(tx_txdelay * 10) / 8; // bits to bytes
+    // Find out how many bits we need at 9600
+    int flags = MS_TO_BITS(tx_txdelay * 10);
 
-    il2p_send_idle(flags);
-    num_bits += (flags * 8);
+    // divide bits to find octets
+    il2p_send_idle(flags / 8);   // each flag is one octet
+    num_bits += flags;
 
     /*
      * Give other threads some time
@@ -289,10 +403,10 @@ static void tx_frames(int prio, packet_t pp)
     /*
      * Now send the tx_tail
      */
-    flags = MS_TO_BITS(tx_txtail * 10) / 8; // bits to bytes
+    flags = MS_TO_BITS(tx_txtail * 10);
 
-    il2p_send_idle(flags);
-    num_bits += (flags * 8);
+    il2p_send_idle(flags / 8);
+    num_bits += flags;
 
     /*
      * Get the souncard pushing
