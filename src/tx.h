@@ -21,7 +21,7 @@ extern "C"
 #include "audio.h"
 
     void tx_init(struct audio_s *);
-    void tx_frame_bits(unsigned char *tx_bits, int);
+    void tx_frame_bits(int, unsigned char *tx_bits, int);
 
 #ifdef __cplusplus
 }

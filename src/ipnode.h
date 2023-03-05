@@ -41,7 +41,10 @@ extern "C"
 /*
  * Idle Flag
  */
-#define FLAG 0x33
+#define FLAG 0b01010101
+
+#define Mode_BPSK 0
+#define Mode_QPSK 1
 
 /*
  * This method is much faster than using cexp()

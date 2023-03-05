@@ -68,25 +68,19 @@ int il2p_send_frame(packet_t pp)
         number_of_bits += 8;
     }
 
-    tx_frame_bits(tx_bits, number_of_bits);
+    tx_frame_bits(Mode_QPSK, tx_bits, number_of_bits);
 
     return number_of_bits;
 }
 
 /*
- * Send txdelay and txtail symbols to modulator
- * Send flags which is 00110011 (0x33) pattern
+ * Send txdelay and txtail flag bits to modulator
  */
 void il2p_send_idle(int num_flags)
 {
     int number_of_bits = 0;
 
     unsigned char tx_bits[num_flags * 8];  // one flag is 8-Bits
-
-    for (int i = 0; i < (num_flags * 8); i++)
-    {
-        tx_bits[i] = 0U;
-    }
 
     /*
      * Send byte to modulator MSB first
@@ -104,6 +98,6 @@ void il2p_send_idle(int num_flags)
         number_of_bits += 8;
     }
 
-    tx_frame_bits(tx_bits, number_of_bits);
+    tx_frame_bits(Mode_BPSK, tx_bits, number_of_bits);
 }
 

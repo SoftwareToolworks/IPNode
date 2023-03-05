@@ -44,8 +44,8 @@ static int tx_txdelay;
 static int tx_txtail;
 static bool tx_fulldup;
 
-#define BITS_TO_MS(b) (((b) * 1000) / tx_bits_per_sec)
-#define MS_TO_BITS(ms) (((ms) * tx_bits_per_sec) / 1000)   // 100 ms == 240 bits
+#define BITS_TO_MS(b) (((b)*1000) / tx_bits_per_sec)
+#define MS_TO_BITS(ms) (((ms)*tx_bits_per_sec) / 1000) // 100 ms == 240 bits
 
 static void *tx_thread(void *);
 static bool wait_for_clear_channel(int, int, bool);
@@ -61,20 +61,6 @@ static complex float tx_filter[NTAPS];
 static complex float m_txPhase;
 static complex float m_txRect;
 static complex float *m_qpsk;
-
-/*
- * Built-in complex multiply is slow because of
- * all the internal checking.
- * 
- * Skip all the checking during tight loops...
- */
-static complex float fast_multiply(complex float a, complex float b)
-{
-    float ii = crealf(a) * crealf(b) - cimagf(a) * cimagf(b);
-    float qq = crealf(a) * cimagf(b) + crealf(b) * cimagf(a);
-
-    return CMPLXF(ii, qq); 
-}
 
 void tx_init(struct audio_s *p_modem)
 {
@@ -188,8 +174,8 @@ static void put_symbols(complex float symbols[], int symbolsCount)
      */
     for (int i = 0; i < outputSize; i++)
     {
-        m_txPhase = fast_multiply(m_txPhase, m_txRect);
-        signal[i] = fast_multiply(signal[i], m_txPhase) * 16384.0f; // Factor PCM amplitude
+        m_txPhase *= m_txRect;
+        signal[i] *= (m_txPhase * 16384.0f); // Factor PCM amplitude
     }
 
     /*
@@ -210,38 +196,47 @@ static void put_symbols(complex float symbols[], int symbolsCount)
 /*
  * Transmit octets
  */
-void tx_frame_bits(unsigned char tx_bits[], int num_bits)
+void tx_frame_bits(int mode, unsigned char tx_bits[], int num_bits)
 {
     int symbol_count = 0;
     int bit_count = 0;
     int save_bit;
 
-    complex float tx_symbols[num_bits / 2];  // 2-Bits per symbol
-
-    for (int i = 0; i < (num_bits / 2); i++)
+    if (mode == Mode_QPSK)
     {
-        tx_symbols[i] = CMPLXF(0.0f, 0.0f);
-    }
+        complex float tx_symbols[num_bits / 2]; // 2-Bits per symbol
 
-    for (int i = 0; i < num_bits; i++)
-    {
-        if (bit_count == 0) // wait for 2 bits
+        for (int i = 0; i < num_bits; i++)
         {
-            save_bit = tx_bits[i];
-            bit_count++;
+            if (bit_count == 0) // wait for 2 bits
+            {
+                save_bit = tx_bits[i];
+                bit_count++;
 
-            continue;
+                continue;
+            }
+
+            unsigned char dibit = ((save_bit << 1) | tx_bits[i]) & 0x3;
+
+            tx_symbols[symbol_count++] = getQPSKQuadrant(dibit);
+
+            save_bit = 0; // reset for next bits
+            bit_count = 0;
         }
 
-        unsigned char dibit = ((save_bit << 1) | tx_bits[i]) & 0x3;
-
-        tx_symbols[symbol_count++] = getQPSKQuadrant(dibit);
-
-        save_bit = 0; // reset for next bits
-        bit_count = 0;
+        put_symbols(tx_symbols, symbol_count);
     }
+    else
+    {
+        complex float tx_symbols[num_bits]; // 1-Bit per symbol
 
-    put_symbols(tx_symbols, symbol_count);
+        for(int i = 0; i < num_bits; i++)
+        {
+            tx_symbols[symbol_count++] = getQPSKQuadrant((tx_bits[i] == 0) ? 0 : 3);
+        }
+
+        put_symbols(tx_symbols, symbol_count);
+    }
 }
 
 static bool wait_for_clear_channel(int slottime, int persist, bool fulldup)
@@ -339,7 +334,7 @@ static void tx_frames(int prio, packet_t pp)
     int flags = MS_TO_BITS(tx_txdelay * 10);
 
     // divide bits to find octets
-    il2p_send_idle(flags / 8);   // each flag is one octet
+    il2p_send_idle(flags / 8); // each flag is one octet
     num_bits += flags;
 
     /*
