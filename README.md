@@ -13,7 +13,6 @@ Ubuntu desktop is used for development. The PTT code is currently commented out 
 
 The GPIO will need PTT, DCD, Connect, and Sync as interface lines.   
 #### Notes
-The IL2P description says the idle flag is supposed to be ```01010101``` during ```txdelay``` and ```txtail``` but this doesn't work for PSK, so we send '00' and '11' as 1200 Baud BPSK, and use ```00110011``` or ```0x33``` for the flag..   
 ```
 +----------------------+-------------+---------------------+
 | txdelay idle symbols | IL2P packet | txtail idle symbols |
