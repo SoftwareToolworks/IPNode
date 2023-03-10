@@ -226,7 +226,7 @@ void tx_frame_bits(int mode, unsigned char tx_bits[], int num_bits)
 
         put_symbols(tx_symbols, symbol_count);
     }
-    else
+    else // Mode_BPSK
     {
         complex float tx_symbols[num_bits]; // 1-Bit per symbol
 

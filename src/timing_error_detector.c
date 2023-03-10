@@ -14,7 +14,6 @@
 #include <math.h>
 
 #include "deque.h"
-#include "constellation.h"
 #include "timing_error_detector.h"
 
 // BSS Storage
