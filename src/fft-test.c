@@ -56,7 +56,7 @@ int main()
 
     for (int i = 0; i < 256; i++)
     {
-        fx3[i] = fx3[i] * conjf(fx3[i]);
+        fx3[i] = fx3[i] * conj(fx3[i]);
         fx3[i] *= 1.0 / 256.0;
     }
 
